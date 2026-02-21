@@ -722,6 +722,106 @@ Returns:
 );
 
 // ============================================================================
+// TOOL: codecks_create_project
+// ============================================================================
+server.registerTool(
+  "codecks_create_project",
+  {
+    title: "Create Codecks Project",
+    description: `Create a new project in Codecks.
+
+Args:
+  - name (string): Project name
+  - default_user_access (enum, optional): Default access for users (everyone | onlyMembers)
+  - template_id (string, optional): Template ID (e.g., cdx/survival)
+  - file_id (string, optional): Cover file ID
+  - session_id (string, optional): Client session ID from web app
+
+Returns:
+  API response payload with the created project.`,
+    inputSchema: schemas.CreateProjectSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.CreateProjectInput) => {
+    try {
+      const client = getClient();
+
+      const data = {
+        sessionId: params.session_id || undefined,
+        name: params.name,
+        fileId: params.file_id ?? null,
+        defaultUserAccess: params.default_user_access,
+        templateId: params.template_id ?? null
+      };
+
+      const response = await client.dispatch("projects/create", data);
+
+      return {
+        content: [{ type: "text", text: "Project created successfully." }],
+        structuredContent: response
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_set_project_visibility
+// ============================================================================
+server.registerTool(
+  "codecks_set_project_visibility",
+  {
+    title: "Set Codecks Project Visibility",
+    description: `Update a project's visibility (including deletion).
+
+Args:
+  - project_id (string): Project ID
+  - visibility (enum, optional): deleted | archived | private | public (default: deleted)
+  - session_id (string, optional): Client session ID from web app
+
+Returns:
+  API response payload with the update result.`,
+    inputSchema: schemas.SetProjectVisibilitySchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.SetProjectVisibilityInput) => {
+    try {
+      const client = getClient();
+
+      const data = {
+        sessionId: params.session_id || undefined,
+        id: params.project_id,
+        visibility: params.visibility
+      };
+
+      const response = await client.dispatch("projects/setVisibility", data);
+
+      return {
+        content: [{ type: "text", text: "Project visibility updated successfully." }],
+        structuredContent: response
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
 // TOOL: codecks_list_milestones
 // ============================================================================
 server.registerTool(

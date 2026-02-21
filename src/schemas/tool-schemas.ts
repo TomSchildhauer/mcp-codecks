@@ -123,6 +123,22 @@ export const ListProjectsSchema = z.object({
   response_format: ResponseFormatSchema
 }).strict();
 
+export const CreateProjectSchema = z.object({
+  name: z.string().min(1).describe("Project name"),
+  default_user_access: z.enum(["everyone", "onlyMembers"]).default("everyone")
+    .describe("Default user access level"),
+  template_id: z.string().optional().describe("Template ID (e.g., cdx/survival)"),
+  file_id: z.string().optional().describe("Cover file ID"),
+  session_id: z.string().optional().describe("Client session ID from web app")
+}).strict();
+
+export const SetProjectVisibilitySchema = z.object({
+  project_id: z.string().describe("Project ID"),
+  visibility: z.enum(["deleted", "archived", "private", "public"]).default("deleted")
+    .describe("Visibility to set (use 'deleted' to remove)"),
+  session_id: z.string().optional().describe("Client session ID from web app")
+}).strict();
+
 // Milestone schemas
 export const ListMilestonesSchema = z.object({
   response_format: ResponseFormatSchema
@@ -149,6 +165,8 @@ export type GetDeckInput = z.infer<typeof GetDeckSchema>;
 export type CreateDeckInput = z.infer<typeof CreateDeckSchema>;
 export type AddDecksToSpaceAfterInput = z.infer<typeof AddDecksToSpaceAfterSchema>;
 export type ListProjectsInput = z.infer<typeof ListProjectsSchema>;
+export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
+export type SetProjectVisibilityInput = z.infer<typeof SetProjectVisibilitySchema>;
 export type ListMilestonesInput = z.infer<typeof ListMilestonesSchema>;
 export type GetMilestoneInput = z.infer<typeof GetMilestoneSchema>;
 export type GetCurrentUserInput = z.infer<typeof GetCurrentUserSchema>;

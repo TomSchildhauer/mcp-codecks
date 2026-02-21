@@ -96,6 +96,8 @@ npm run dev
 ### Project & Milestone Operations
 
 - `codecks_list_projects` - List all projects (with optional archived projects)
+- `codecks_create_project` - Create a new project
+- `codecks_set_project_visibility` - Update project visibility (use `deleted` to remove)
 - `codecks_list_milestones` - List all milestones with due dates
 - `codecks_get_milestone` - Get detailed information about a specific milestone
 

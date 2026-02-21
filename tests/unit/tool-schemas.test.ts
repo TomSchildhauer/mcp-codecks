@@ -3,7 +3,9 @@ import {
   AddDecksToSpaceAfterSchema,
   BulkUpdateCardsSchema,
   CreateCardSchema,
-  CreateDeckSchema
+  CreateDeckSchema,
+  CreateProjectSchema,
+  SetProjectVisibilitySchema
 } from "../../src/schemas/tool-schemas.js";
 
 describe("tool schemas", () => {
@@ -39,5 +41,22 @@ describe("tool schemas", () => {
       user_id: "user-1"
     };
     expect(() => CreateCardSchema.parse(value)).not.toThrow();
+  });
+
+  it("validates create project inputs", () => {
+    const value = {
+      name: "Project",
+      default_user_access: "everyone",
+      template_id: "cdx/survival"
+    };
+    expect(() => CreateProjectSchema.parse(value)).not.toThrow();
+  });
+
+  it("validates set project visibility inputs", () => {
+    const value = {
+      project_id: "project-1",
+      visibility: "deleted"
+    };
+    expect(() => SetProjectVisibilitySchema.parse(value)).not.toThrow();
   });
 });
