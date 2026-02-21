@@ -29,7 +29,7 @@ describe("query builder", () => {
   });
 
   it("buildRootQuery returns _root structure", () => {
-    const query = buildRootQuery(schema, "account", ["id", "name"]);
+    const query = buildRootQuery(schema, "account", ["name"]);
     expect(query).toHaveProperty("_root");
     expect(Array.isArray(query._root)).toBe(true);
     expect(query._root[0]).toHaveProperty("account");

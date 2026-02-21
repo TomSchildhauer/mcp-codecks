@@ -125,6 +125,28 @@ const existing = fs.existsSync(schemaPath)
   ? JSON.parse(fs.readFileSync(schemaPath, "utf8"))
   : {};
 
+const modelNames = new Set(Object.keys(models));
+for (const [modelName, model] of Object.entries(models)) {
+  for (const [fieldName, fieldType] of Object.entries(model.fields)) {
+    const typeString = String(fieldType);
+    const isMany = typeString.endsWith("[]");
+    const baseType = isMany ? typeString.slice(0, -2) : typeString;
+
+    if (!modelNames.has(baseType)) {
+      continue;
+    }
+
+    if (!model.relations[fieldName]) {
+      model.relations[fieldName] = {
+        type: baseType,
+        cardinality: isMany ? "many" : "one"
+      };
+    }
+
+    delete model.fields[fieldName];
+  }
+}
+
 const nextSchema = {
   $schema: existing.$schema || "http://json-schema.org/draft-07/schema#",
   title: existing.title || "Codecks API Schema",

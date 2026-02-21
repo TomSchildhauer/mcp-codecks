@@ -3,7 +3,7 @@
   "title": "Codecks API Schema",
   "description": "Structured schema for Codecks API models, fields, and relations",
   "version": "1.0.0",
-  "generatedAt": "2026-02-21T22:24:14.616Z",
+  "generatedAt": "2026-02-21T22:44:38.743Z",
   "source": "docs/codecks-api/api-reference.md",
   "models": {
     "_root": {
@@ -66,45 +66,73 @@
     "accountOnboarding": {
       "type": "model",
       "fields": {
-        "account": "account",
         "steps": "json",
         "variants": "array"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        }
+      }
     },
     "accountRole": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "lastChangedAt": "date",
         "role": "string",
-        "roleAsPrio": "int",
-        "user": "user"
+        "roleAsPrio": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "accountUserAchievement": {
       "type": "model",
       "fields": {
-        "account": "account",
         "context": "json",
-        "user": "user",
         "value": "json"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "accountUserSetting": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "inboxDeck": "deck",
         "startWeekdayOverwrite": "unknown",
         "timelineScaleTypeOverwrite": "unknown",
-        "user": "user",
         "wantsWeeklyDigestMail": "bool"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "inboxDeck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "account": {
       "type": "model",
@@ -123,10 +151,8 @@
         "billingZip": "string",
         "coupon": "json",
         "createdAt": "date",
-        "defaultInboxDeck": "deck",
         "dependenciesEnabled": "bool",
         "disabledAt": "date",
-        "disabledBy": "user",
         "effortScale": "json",
         "fallbackEffort": "int",
         "hideCompletedCardCountForDecks": "bool",
@@ -321,41 +347,77 @@
         "accountOnboarding": {
           "type": "accountOnboarding",
           "cardinality": "one"
+        },
+        "defaultInboxDeck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "disabledBy": {
+          "type": "user",
+          "cardinality": "one"
         }
       }
     },
     "activeTimeTracker": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "createdAt": "date",
-        "user": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "activity": {
       "type": "model",
       "fields": {
-        "card": "card",
-        "changer": "user",
         "createdAt": "date",
         "data": "json",
-        "deck": "deck",
         "isRemovedFromDeckEntry": "bool",
         "isRemovedFromMilestoneEntry": "bool",
         "isRemovedFromSprintEntry": "bool",
-        "milestone": "milestone",
-        "project": "project",
-        "sprint": "sprint",
         "type": "string"
       },
-      "relations": {}
+      "relations": {
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "changer": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "sprint": {
+          "type": "sprint",
+          "cardinality": "one"
+        }
+      }
     },
     "affiliateCodeStat": {
       "type": "model",
       "fields": {
-        "affiliateCode": "affiliateCode",
         "month": "int",
         "newVisitors": "int",
         "revenue": "int",
@@ -363,15 +425,18 @@
         "visits": "int",
         "year": "int"
       },
-      "relations": {}
+      "relations": {
+        "affiliateCode": {
+          "type": "affiliateCode",
+          "cardinality": "one"
+        }
+      }
     },
     "affiliateCode": {
       "type": "model",
       "fields": {
-        "account": "account",
         "code": "string",
         "createdAt": "date",
-        "creator": "user",
         "isDeleted": "bool",
         "isDisabled": "bool",
         "label": "string",
@@ -385,18 +450,36 @@
         "stats": {
           "type": "affiliateCodeStat",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
         }
       }
     },
     "appInstallation": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "app": "app",
-        "createdAt": "date",
-        "installer": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "app": {
+          "type": "app",
+          "cardinality": "one"
+        },
+        "installer": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "app": {
       "type": "model",
@@ -410,143 +493,250 @@
     "assigneeAssignment": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "assignedBy": "user",
-        "assignee": "user",
         "lastAssignedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "assignedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "assigneeDeckAssignment": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "assignedBy": "user",
-        "assignee": "user",
-        "deck": "deck",
         "lastAssignedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "assignedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        }
+      }
     },
     "attachment": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "content": "string",
         "createdAt": "date",
-        "creator": "user",
-        "file": "file",
         "title": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "file": {
+          "type": "file",
+          "cardinality": "one"
+        }
+      }
     },
     "autoFinishedTimeTrackingSegment": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "createdAt": "date",
-        "timeTrackingSegment": "timeTrackingSegment",
-        "user": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "timeTrackingSegment": {
+          "type": "timeTrackingSegment",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardDiffNotification": {
       "type": "model",
       "fields": {
-        "account": "account",
         "asOwner": "bool",
-        "card": "card",
         "changers": "array",
         "changes": "json",
         "createdAt": "date",
-        "lastUpdatedAt": "date",
-        "user": "user"
+        "lastUpdatedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardHistory": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "changer": "user",
         "diff": "json",
         "version": "int",
         "versionCreatedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "changer": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardOrderInDeck": {
       "type": "model",
       "fields": {
-        "card": "card",
-        "changer": "user",
-        "deck": "deck",
         "sortIndex": "string"
       },
-      "relations": {}
+      "relations": {
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "changer": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        }
+      }
     },
     "cardOrder": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "label": "string",
         "sortValue": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        }
+      }
     },
     "cardPreset": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
-        "creator": "user",
         "data": "json",
         "name": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardSubscription": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "createdAt": "date",
-        "user": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardUpvote": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "createdAt": "date",
         "discordUserInfo": "json",
-        "type": "string",
-        "user": "user"
+        "type": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "card": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
-        "assignee": "user",
         "checkboxInfo": "array",
         "checkboxStats": "json",
         "childCardInfo": "string",
         "content": "string",
-        "coverFile": "file",
         "createdAt": "date",
-        "creator": "user",
-        "deck": "deck",
         "derivedStatus": "string",
-        "discordGuild": "discordGuild",
         "dueDate": "day",
         "effort": "int",
         "embeds": "json",
@@ -554,22 +744,16 @@
         "isDoc": "bool",
         "isPublic": "bool",
         "lastUpdatedAt": "date",
-        "legacyProject": "project",
         "legacyProjectSeq": "int",
         "masterTags": "array",
         "mentionedUsers": "array",
         "meta": "json",
-        "milestone": "milestone",
-        "parentCard": "card",
         "priority": "unknown",
-        "sourceWorkflowItem": "workflowItem",
-        "sprint": "sprint",
         "status": "string",
         "tags": "array",
         "title": "string",
         "version": "int",
-        "visibility": "string",
-        "visionBoard": "visionBoard"
+        "visibility": "string"
       },
       "relations": {
         "resolvables": {
@@ -635,6 +819,54 @@
         "upvotes": {
           "type": "cardUpvote",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "coverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "discordGuild": {
+          "type": "discordGuild",
+          "cardinality": "one"
+        },
+        "legacyProject": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "parentCard": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "sourceWorkflowItem": {
+          "type": "workflowItem",
+          "cardinality": "one"
+        },
+        "sprint": {
+          "type": "sprint",
+          "cardinality": "one"
+        },
+        "visionBoard": {
+          "type": "visionBoard",
+          "cardinality": "one"
         }
       }
     },
@@ -650,12 +882,16 @@
     "cardsFinishedHistory": {
       "type": "model",
       "fields": {
-        "assignee": "user",
         "cardCount": "bigint",
         "date": "day",
         "effortSum": "bigint"
       },
-      "relations": {}
+      "relations": {
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "cardsStatusHistory": {
       "type": "model",
@@ -669,93 +905,133 @@
     "cardsTimeToFinished": {
       "type": "model",
       "fields": {
-        "assignee": "user",
-        "card": "card",
         "doneAt": "date",
         "effort": "int",
         "startedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        }
+      }
     },
     "dailyDiscordGuildVoteMembership": {
       "type": "model",
       "fields": {
-        "discordGuild": "discordGuild",
         "membershipCount": "int",
         "t": "date"
       },
-      "relations": {}
+      "relations": {
+        "discordGuild": {
+          "type": "discordGuild",
+          "cardinality": "one"
+        }
+      }
     },
     "dailyPublicProjectMembership": {
       "type": "model",
       "fields": {
         "membershipCount": "int",
-        "project": "project",
         "t": "date"
       },
-      "relations": {}
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "publicProjectVisit": {
       "type": "model",
       "fields": {
-        "project": "project",
         "t": "date",
         "topReferrers": "json",
         "visitCounts": "int"
       },
-      "relations": {}
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "deckAssignment": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "deck": "deck",
-        "lastAssignedAt": "date",
-        "user": "user"
+        "lastAssignedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "deckGuardian": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "deck": "deck",
-        "user": "user"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "deckSubscription": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "deck": "deck",
-        "user": "user"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "deck": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
         "content": "string",
         "coverColor": "unknown",
-        "coverFile": "file",
         "createdAt": "date",
-        "creator": "user",
         "deckType": "string",
         "defaultCard": "json",
-        "defaultProjectTag": "projectTag",
         "description": "string",
-        "descriptionCoverFile": "file",
         "handSyncEnabled": "bool",
         "hasGuardians": "bool",
         "isDeleted": "bool",
         "isOnboardingDeck": "bool",
         "manualOrderLabels": "json",
-        "milestone": "milestone",
         "preferredOrder": "unknown",
-        "project": "project",
         "sortValue": "string",
         "spaceId": "int",
         "stats": "json",
@@ -783,13 +1059,40 @@
         "guardians": {
           "type": "deckGuardian",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "coverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "defaultProjectTag": {
+          "type": "projectTag",
+          "cardinality": "one"
+        },
+        "descriptionCoverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
         }
       }
     },
     "discordGuild": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "discordGuildId": "string",
         "guildIconId": "string",
@@ -817,6 +1120,10 @@
         "members": {
           "type": "discordMember",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
         }
       }
     },
@@ -826,33 +1133,42 @@
         "avatar": "string",
         "createdAt": "date",
         "deckyScore": "int",
-        "discordGuild": "discordGuild",
         "discordUserId": "string",
         "discriminator": "string",
         "name": "string",
         "nick": "string"
       },
-      "relations": {}
+      "relations": {
+        "discordGuild": {
+          "type": "discordGuild",
+          "cardinality": "one"
+        }
+      }
     },
     "discordProjectNotification": {
       "type": "model",
       "fields": {
         "createdAt": "date",
         "disabledTypes": "json",
-        "discordChannelId": "string",
-        "discordGuild": "discordGuild",
-        "project": "project"
+        "discordChannelId": "string"
       },
-      "relations": {}
+      "relations": {
+        "discordGuild": {
+          "type": "discordGuild",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "discordSlashCommand": {
       "type": "model",
       "fields": {
         "autoAddRoleToThread": "string",
         "channelId": "string",
-        "deck": "deck",
         "description": "string",
-        "discordGuild": "discordGuild",
         "karmaForCompletion": "int",
         "leaderboard": "json",
         "maxFileSizeInBytes": "int",
@@ -863,63 +1179,111 @@
         "statusMessages": "json",
         "statusTargetChannelId": "string"
       },
-      "relations": {}
+      "relations": {
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "discordGuild": {
+          "type": "discordGuild",
+          "cardinality": "one"
+        }
+      }
     },
     "dueCard": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "createdAt": "date",
-        "user": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "file": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "deletedAt": "date",
-        "deletedBy": "user",
         "isDeleted": "bool",
         "meta": "json",
         "name": "string",
         "selfHosted": "bool",
         "size": "string",
-        "uploader": "user",
         "url": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "deletedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "uploader": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "handCard": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
-        "sortIndex": "int",
-        "user": "user"
+        "sortIndex": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "integration": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
-        "creator": "user",
         "disabled": "string",
         "type": "string",
-        "user": "user",
         "userData": "json",
         "version": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "invoice": {
       "type": "model",
       "fields": {
-        "account": "account",
         "chargeData": "json",
         "charged": "int",
         "createdAt": "date",
@@ -928,44 +1292,66 @@
         "total": "int",
         "url": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        }
+      }
     },
     "lastSeenCardUpvote": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
-        "lastSeenAt": "date",
-        "user": "user"
+        "lastSeenAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "milestoneProgress": {
       "type": "model",
       "fields": {
-        "milestone": "milestone",
         "progress": "json"
       },
-      "relations": {}
+      "relations": {
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        }
+      }
     },
     "milestoneProject": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "milestone": "milestone",
-        "project": "project"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "milestone": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
         "color": "string",
-        "coverFile": "file",
         "createdAt": "date",
-        "creator": "user",
         "date": "day",
         "description": "unknown",
         "handSyncEnabled": "bool",
@@ -994,37 +1380,80 @@
         "progress": {
           "type": "milestoneProgress",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "coverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
         }
       }
     },
     "pinnedMilestone": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "milestone": "milestone",
-        "sprint": "sprint",
-        "user": "user"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "milestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "sprint": {
+          "type": "sprint",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "projectOrder": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "project": "project",
-        "sortIndex": "int",
-        "user": "user"
+        "sortIndex": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "projectSelection": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "project": "project",
-        "user": "user"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "projectTag": {
       "type": "model",
@@ -1033,37 +1462,55 @@
         "createdAt": "date",
         "description": "string",
         "emoji": "string",
-        "project": "project",
         "tag": "string"
       },
-      "relations": {}
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "projectUserSetting": {
       "type": "model",
-      "fields": {
-        "project": "project",
-        "user": "user"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "projectUser": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "project": "project",
-        "projectRole": "string",
-        "user": "user"
+        "projectRole": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "project": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
         "allowUpvotes": "bool",
         "commentsArePublic": "bool",
-        "coverFile": "file",
         "createdAt": "date",
         "defaultUserAccess": "string",
         "effortIcon": "unknown",
@@ -1071,15 +1518,12 @@
         "markerColor": "unknown",
         "name": "string",
         "publicBackgroundColor": "string",
-        "publicBackgroundImage": "file",
-        "publicBannerFile": "file",
         "publicHeading": "string",
         "publicIsExplicit": "bool",
         "publicLayoutVersion": "int",
         "publicMessage": "string",
         "publicPath": "string",
         "publicRegistryAgreement": "bool",
-        "publicTileFile": "file",
         "spaces": "json",
         "visibility": "string"
       },
@@ -1131,53 +1575,107 @@
         "publicProjectInfo": {
           "type": "publicProjectInfo",
           "cardinality": "one"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "coverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "publicBackgroundImage": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "publicBannerFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "publicTileFile": {
+          "type": "file",
+          "cardinality": "one"
         }
       }
     },
     "publicProjectInfo": {
       "type": "model",
       "fields": {
-        "account": "account",
         "activities7d": "string",
         "cardCount": "string",
         "cardDoneStreak": "string",
         "lastActivityAt": "string",
-        "project": "project",
         "visits7d": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        }
+      }
     },
     "publicProjectMembership": {
       "type": "model",
       "fields": {
         "createdAt": "date",
-        "digestFrequencyInDays": "int",
-        "project": "project",
-        "user": "user"
+        "digestFrequencyInDays": "int"
       },
-      "relations": {}
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "queueEntry": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "cardDoneAt": "date",
         "createdAt": "date",
-        "sortIndex": "int",
-        "user": "user"
+        "sortIndex": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "queueSelection": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "queueUser": "user",
-        "sortIndex": "int",
-        "user": "user"
+        "sortIndex": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "queueUser": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "release": {
       "type": "model",
@@ -1193,38 +1691,58 @@
     "resolvableEntryHistory": {
       "type": "model",
       "fields": {
-        "author": "user",
         "content": "string",
-        "entry": "resolvableEntry",
         "lastChangedAt": "date",
-        "resolvable": "resolvable",
         "version": "int"
       },
-      "relations": {}
+      "relations": {
+        "author": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "entry": {
+          "type": "resolvableEntry",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
+        }
+      }
     },
     "resolvableEntryReaction": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "isPublic": "bool",
-        "resolvable": "resolvable",
-        "resolvableEntry": "resolvableEntry",
-        "user": "user",
         "value": "json"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
+        },
+        "resolvableEntry": {
+          "type": "resolvableEntry",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "resolvableEntry": {
       "type": "model",
       "fields": {
-        "author": "user",
-        "card": "card",
         "content": "string",
         "createdAt": "date",
         "lastChangedAt": "date",
         "meta": "json",
-        "resolvable": "resolvable",
         "version": "int"
       },
       "relations": {
@@ -1235,71 +1753,118 @@
         "histories": {
           "type": "resolvableEntryHistory",
           "cardinality": "many"
+        },
+        "author": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
         }
       }
     },
     "resolvableNotification": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "isLastParticipant": "bool",
         "isParticipating": "bool",
         "isSnoozing": "bool",
         "lastUpdatedAt": "date",
-        "latestEntry": "resolvableEntry",
-        "latestSeenEntry": "resolvableEntry",
         "remindMeOn": "date",
-        "resolvable": "resolvable",
         "snoozeUntil": "date",
         "unseenAuthors": "array",
-        "unseenEntryCount": "int",
-        "user": "user"
+        "unseenEntryCount": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "latestEntry": {
+          "type": "resolvableEntry",
+          "cardinality": "one"
+        },
+        "latestSeenEntry": {
+          "type": "resolvableEntry",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "resolvableParticipantHistory": {
       "type": "model",
       "fields": {
-        "addedBy": "user",
         "done": "bool",
         "firstJoinedAt": "string",
         "lastChangedAt": "date",
         "reaction": "string",
-        "resolvable": "resolvable",
         "status": "string",
-        "user": "user",
         "version": "int"
       },
-      "relations": {}
+      "relations": {
+        "addedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "resolvableParticipant": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "addedBy": "user",
         "discordUserId": "string",
         "done": "bool",
         "firstJoinedAt": "date",
         "lastChangedAt": "date",
-        "resolvable": "resolvable",
         "resolvableIsClosed": "bool",
-        "status": "string",
-        "user": "user"
+        "status": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "addedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "resolvable": {
+          "type": "resolvable",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "resolvable": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "closedAt": "date",
-        "closedBy": "user",
         "context": "string",
         "contextAsPrio": "int",
         "createdAt": "date",
-        "creator": "user",
         "isClosed": "bool",
         "isPublic": "bool"
       },
@@ -1315,38 +1880,63 @@
         "entries": {
           "type": "resolvableEntry",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "closedBy": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
         }
       }
     },
     "savedSearch": {
       "type": "model",
       "fields": {
-        "account": "account",
         "forceOr": "bool",
-        "owner": "user",
         "tokens": "array"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "owner": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "sprintConfigProgress": {
       "type": "model",
       "fields": {
-        "progress": "json",
-        "sprintConfig": "sprintConfig"
+        "progress": "json"
       },
-      "relations": {}
+      "relations": {
+        "sprintConfig": {
+          "type": "sprintConfig",
+          "cardinality": "one"
+        }
+      }
     },
     "sprintConfig": {
       "type": "model",
       "fields": {
-        "account": "account",
         "autoAssignNewCard": "bool",
         "autoAssignStartedCard": "bool",
         "autoBeastModeDurationHours": "int",
         "beastGracePeriodHours": "int",
         "color": "string",
         "createdAt": "date",
-        "creator": "user",
         "endHour": "int",
         "endHourTimezone": "string",
         "isGlobal": "bool",
@@ -1370,36 +1960,53 @@
         "progress": {
           "type": "sprintConfigProgress",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
         }
       }
     },
     "sprintProgress": {
       "type": "model",
       "fields": {
-        "progress": "json",
-        "sprint": "sprint"
+        "progress": "json"
       },
-      "relations": {}
+      "relations": {
+        "sprint": {
+          "type": "sprint",
+          "cardinality": "one"
+        }
+      }
     },
     "sprintProject": {
       "type": "model",
-      "fields": {
-        "account": "account",
-        "project": "project",
-        "sprintConfig": "sprintConfig"
-      },
-      "relations": {}
+      "fields": {},
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "sprintConfig": {
+          "type": "sprintConfig",
+          "cardinality": "one"
+        }
+      }
     },
     "sprint": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
-        "autoMilestone": "milestone",
         "completedAt": "date",
-        "coverFile": "file",
         "createdAt": "date",
-        "creator": "user",
         "description": "string",
         "endDate": "day",
         "handSyncEnabled": "bool",
@@ -1408,7 +2015,6 @@
         "lockedAt": "date",
         "manualOrderLabels": "json",
         "name": "string",
-        "sprintConfig": "sprintConfig",
         "startDate": "day",
         "stats": "json",
         "userCapacities": "json"
@@ -1425,13 +2031,32 @@
         "activities": {
           "type": "activity",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "autoMilestone": {
+          "type": "milestone",
+          "cardinality": "one"
+        },
+        "coverFile": {
+          "type": "file",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "sprintConfig": {
+          "type": "sprintConfig",
+          "cardinality": "one"
         }
       }
     },
     "stripeAccountSync": {
       "type": "model",
       "fields": {
-        "account": "account",
         "billingCycleEnd": "date",
         "billingCycleStart": "date",
         "centsPerSeat": "int",
@@ -1449,43 +2074,69 @@
         "vatCountryCode": "string",
         "vatTaxPercentage": "int"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        }
+      }
     },
     "timeTrackingSegment": {
       "type": "model",
       "fields": {
-        "account": "account",
         "addedManually": "bool",
         "autoFinishedState": "string",
-        "card": "card",
         "createdAt": "date",
         "finishedAt": "date",
         "modifyDurationMsBy": "int",
-        "startedAt": "date",
-        "user": "user"
+        "startedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "timeTrackingSum": {
       "type": "model",
       "fields": {
-        "card": "card",
         "runningModifyDurationMsBy": "int",
         "runningStartedAt": "date",
-        "sumMs": "int",
-        "user": "user"
+        "sumMs": "int"
       },
-      "relations": {}
+      "relations": {
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userDismissedHint": {
       "type": "model",
       "fields": {
         "createdAt": "date",
         "hintKey": "string",
-        "returnAt": "date",
-        "user": "user"
+        "returnAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userEmail": {
       "type": "model",
@@ -1493,75 +2144,118 @@
         "createdAt": "date",
         "email": "string",
         "isPrimary": "bool",
-        "isVerified": "bool",
-        "user": "user"
+        "isVerified": "bool"
       },
-      "relations": {}
+      "relations": {
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userInvitation": {
       "type": "model",
       "fields": {
         "accessToProjectIds": "array",
-        "account": "account",
         "createdAt": "date",
         "email": "string",
-        "inviter": "user",
         "role": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "inviter": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userInviteCode": {
       "type": "model",
       "fields": {
         "accessToProjectIds": "array",
-        "account": "account",
         "createdAt": "date",
-        "creator": "user",
         "isActive": "bool",
         "role": "string",
         "token": "string",
         "useCount": "int",
         "validUntil": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userNotificationChannel": {
       "type": "model",
       "fields": {
-        "account": "account",
         "channelType": "string",
-        "createdAt": "date",
-        "user": "user"
+        "createdAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userOnboarding": {
       "type": "model",
       "fields": {
-        "steps": "json",
-        "user": "user"
+        "steps": "json"
       },
-      "relations": {}
+      "relations": {
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userProjectAccess": {
       "type": "model",
       "fields": {
-        "project": "project",
         "projectRole": "string",
-        "role": "string",
-        "user": "user"
+        "role": "string"
       },
-      "relations": {}
+      "relations": {
+        "project": {
+          "type": "project",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "userTag": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
-        "tag": "string",
-        "user": "user"
+        "tag": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "user": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "user": {
       "type": "model",
@@ -1575,9 +2269,7 @@
         "fullName": "unknown",
         "hasPassword": "bool",
         "isIntegration": "bool",
-        "lastSeenRelease": "release",
         "name": "string",
-        "profileImage": "file",
         "showCardIdInTimer": "bool",
         "statusColorPalette": "string",
         "timezone": "string",
@@ -1701,6 +2393,14 @@
         "userOnboarding": {
           "type": "userOnboarding",
           "cardinality": "one"
+        },
+        "lastSeenRelease": {
+          "type": "release",
+          "cardinality": "one"
+        },
+        "profileImage": {
+          "type": "file",
+          "cardinality": "one"
         }
       },
       "quirks": {
@@ -1713,18 +2413,24 @@
     "userReportEmail": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "email": "string",
-        "enabled": "string",
-        "userReportSetting": "userReportSetting"
+        "enabled": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "userReportSetting": {
+          "type": "userReportSetting",
+          "cardinality": "one"
+        }
+      }
     },
     "userReportSetting": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "deckMapping": "json",
         "fileSizeBytesLimit": "bigint",
@@ -1735,6 +2441,10 @@
         "reportTokens": {
           "type": "userReportToken",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
         }
       }
     },
@@ -1744,16 +2454,18 @@
         "createdAt": "date",
         "enabled": "string",
         "label": "string",
-        "reportCount": "int",
-        "userReportSetting": "userReportSetting"
+        "reportCount": "int"
       },
-      "relations": {}
+      "relations": {
+        "userReportSetting": {
+          "type": "userReportSetting",
+          "cardinality": "one"
+        }
+      }
     },
     "visionBoardQuery": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "card": "card",
         "createdAt": "date",
         "isStale": "bool",
         "lastUsedAt": "date",
@@ -1761,55 +2473,81 @@
         "query": "json",
         "type": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        }
+      }
     },
     "visionBoard": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
-        "card": "card",
         "createdAt": "date",
-        "creator": "user",
         "isDeleted": "bool"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "card": {
+          "type": "card",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "wizard": {
       "type": "model",
       "fields": {
-        "account": "account",
         "createdAt": "date",
         "currentStep": "string",
         "data": "json",
         "finishedAt": "date",
         "name": "string"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        }
+      }
     },
     "workflowItemHistory": {
       "type": "model",
       "fields": {
-        "account": "account",
-        "changer": "user",
         "diff": "json",
         "version": "int",
         "versionCreatedAt": "date"
       },
-      "relations": {}
+      "relations": {
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "changer": {
+          "type": "user",
+          "cardinality": "one"
+        }
+      }
     },
     "workflowItem": {
       "type": "model",
       "fields": {
-        "account": "account",
         "accountSeq": "int",
-        "assignee": "user",
         "checkboxInfo": "array",
         "checkboxStats": "json",
         "content": "string",
         "createdAt": "date",
-        "creator": "user",
-        "deck": "deck",
         "effort": "int",
         "label": "string",
         "lastUpdatedAt": "date",
@@ -1819,7 +2557,6 @@
         "sortOrder": "string",
         "sortValue": "string",
         "tags": "array",
-        "targetDeck": "deck",
         "title": "string",
         "version": "string",
         "visibility": "string"
@@ -1836,6 +2573,26 @@
         "outDeps": {
           "type": "workflowItem",
           "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "assignee": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "creator": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "deck": {
+          "type": "deck",
+          "cardinality": "one"
+        },
+        "targetDeck": {
+          "type": "deck",
+          "cardinality": "one"
         }
       }
     }

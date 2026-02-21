@@ -29,10 +29,16 @@ export function loadSchema(): CodecksApiSchema {
     return cachedSchema;
   }
 
-  const candidates = [
-    path.join(process.cwd(), "dist", "schemas", "codecks-api-schema.json"),
-    path.join(process.cwd(), "src", "schemas", "codecks-api-schema.json")
-  ];
+  const preferSource = process.env.NODE_ENV !== "production";
+  const candidates = preferSource
+    ? [
+        path.join(process.cwd(), "src", "schemas", "codecks-api-schema.json"),
+        path.join(process.cwd(), "dist", "schemas", "codecks-api-schema.json")
+      ]
+    : [
+        path.join(process.cwd(), "dist", "schemas", "codecks-api-schema.json"),
+        path.join(process.cwd(), "src", "schemas", "codecks-api-schema.json")
+      ];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
