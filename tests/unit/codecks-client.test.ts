@@ -90,20 +90,20 @@ describe("CodecksClient", () => {
   });
 
   it("maps ENOTFOUND errors to connection message", () => {
-    const client = new CodecksClient("token", "subdomain") as any;
+    const client = new CodecksClient("token", "subdomain");
     const error = { isAxiosError: true, code: "ENOTFOUND" };
     const mapped = client.handleError(error);
     expect(mapped.message).toContain("Cannot connect to Codecks API");
   });
   it("maps ECONNABORTED errors to timeout message", () => {
-    const client = new CodecksClient("token", "subdomain") as any;
+    const client = new CodecksClient("token", "subdomain");
     const error = { isAxiosError: true, code: "ECONNABORTED" };
     const mapped = client.handleError(error);
     expect(mapped.message).toContain("Request timed out");
   });
 
   it("handles non-Axios unknown errors", () => {
-    const client = new CodecksClient("token", "subdomain") as any;
+    const client = new CodecksClient("token", "subdomain");
     const mapped = client.handleError("boom");
     expect(mapped.message).toContain("Unexpected error: boom");
   });
@@ -135,7 +135,7 @@ describe("CodecksClient", () => {
   });
 
   it("returns error instance for non-Axios errors", () => {
-    const client = new CodecksClient("token", "subdomain") as any;
+    const client = new CodecksClient("token", "subdomain");
     const error = new Error("plain");
     const mapped = client.handleError(error);
     expect(mapped).toBe(error);

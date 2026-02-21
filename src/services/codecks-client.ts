@@ -69,7 +69,7 @@ export class CodecksClient {
   /**
    * Handle API errors with descriptive messages
    */
-  private handleError(error: unknown): Error {
+  public handleError(error: unknown): Error {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError;
       
