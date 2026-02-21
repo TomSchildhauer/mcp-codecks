@@ -53,7 +53,7 @@ export function formatCard(card: any, format: ResponseFormat): string {
     lines.push("", "## Content", "", card.content);
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -78,7 +78,7 @@ export function formatMilestone(milestone: any, format: ResponseFormat): string 
     lines.push("", "## Description", "", milestone.description);
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -119,7 +119,7 @@ export function formatCardList(cards: any[], format: ResponseFormat, meta?: any)
     lines.push("");
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -149,7 +149,7 @@ export function formatDeck(deck: any, format: ResponseFormat): string {
     lines.push("", "## Description", "", deck.description);
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -172,7 +172,7 @@ export function formatDeckList(decks: any[], format: ResponseFormat): string {
     lines.push("");
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -192,7 +192,7 @@ export function formatProjectList(projects: any[], format: ResponseFormat): stri
     lines.push("");
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -217,7 +217,7 @@ export function formatMilestoneList(milestones: any[], format: ResponseFormat): 
     lines.push("");
   }
 
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 /**
@@ -228,7 +228,7 @@ export function checkAndTruncate(content: string, dataLength: number): { content
     return { content, truncated: false };
   }
 
-  const truncationMsg = `\\n\\n---\\n**Response truncated** - showing approximately half of ${dataLength} items. Use pagination (offset/limit) or add filters to see more results.`;
+  const truncationMsg = `\n\n---\n**Response truncated** - showing approximately half of ${dataLength} items. Use pagination (offset/limit) or add filters to see more results.`;
   const maxLength = CHARACTER_LIMIT - truncationMsg.length;
   
   return {

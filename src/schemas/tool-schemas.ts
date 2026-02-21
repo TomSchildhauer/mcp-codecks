@@ -78,16 +78,6 @@ export const CreateCardSchema = z.object({
   user_id: z.string().describe("Your user ID (required for creating cards)")
 }).strict();
 
-export const UpdateCardSchema = z.object({
-  card_id: z.string().describe("The card ID to update"),
-  content: z.string().optional().describe("Updated card content"),
-  assignee_id: z.string().optional().describe("New assignee user ID (null to unassign)"),
-  effort: z.number().int().min(0).optional().describe("Updated effort points"),
-  priority: z.enum(["a", "b", "c"]).optional().describe("Updated priority"),
-  status: z.enum(["unassigned", "assigned", "started", "review", "blocked", "done"]).optional()
-    .describe("Updated workflow status"),
-  user_id: z.string().describe("Your user ID")
-}).strict();
 
 // Deck schemas
 export const ListDecksSchema = z.object({
@@ -158,7 +148,6 @@ export const GetCurrentUserSchema = z.object({
 export type ListCardsInput = z.infer<typeof ListCardsSchema>;
 export type GetCardInput = z.infer<typeof GetCardSchema>;
 export type CreateCardInput = z.infer<typeof CreateCardSchema>;
-export type UpdateCardInput = z.infer<typeof UpdateCardSchema>;
 export type BulkUpdateCardsInput = z.infer<typeof BulkUpdateCardsSchema>;
 export type ListDecksInput = z.infer<typeof ListDecksSchema>;
 export type GetDeckInput = z.infer<typeof GetDeckSchema>;

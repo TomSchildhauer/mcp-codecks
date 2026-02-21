@@ -108,7 +108,6 @@ Returns:
       "createdAt": string,
       "lastUpdatedAt": string
     }],
-    "total": number,
     "count": number,
     "offset": number,
     "has_more": boolean,
@@ -186,7 +185,6 @@ Error Handling:
 
       // Calculate pagination metadata
       const meta = {
-        total: cards.length, // Note: Codecks doesn't return total count in simple queries
         count: cards.length,
         offset: params.offset,
         has_more: cards.length === params.limit,
@@ -198,7 +196,7 @@ Error Handling:
 
       return {
         content: [{ type: "text", text: content }],
-        structuredContent: params.response_format === ResponseFormat.JSON ? { cards, ...meta } : undefined
+        structuredContent: params.response_format === ResponseFormat.JSON ? { cards, ...meta, truncated } : undefined
       };
     } catch (error) {
       return {
@@ -1098,13 +1096,20 @@ async function runHTTP() {
   app.use(express.json());
 
   app.post('/mcp', async (req, res) => {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true
-    });
-    res.on('close', () => transport.close());
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+    try {
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true
+      });
+      res.on('close', () => transport.close());
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      console.error("MCP request error:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
   });
 
   const port = parseInt(process.env.PORT || '3000');

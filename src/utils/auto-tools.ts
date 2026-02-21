@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CodecksClient } from "../services/codecks-client.js";
 import { ResponseFormat } from "../types.js";
 import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
+import { ResponseFormatSchema } from "../schemas/tool-schemas.js";
 import {
   buildIdQuery,
   buildRelationKey,
@@ -21,10 +22,6 @@ type RegisterAutoToolsOptions = {
   skipModels?: Set<string>;
   existingToolNames?: Set<string>;
 };
-
-const ResponseFormatSchema = z.nativeEnum(ResponseFormat)
-  .default(ResponseFormat.MARKDOWN)
-  .describe("Output format: 'markdown' for human-readable or 'json' for structured data");
 
 const AutoListSchema = z.object({
   limit: z.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
