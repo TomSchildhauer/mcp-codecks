@@ -84,11 +84,14 @@ npm run dev
 - `codecks_list_cards` - List cards with filtering by deck, milestone, assignee, status, or search term
 - `codecks_get_card` - Get detailed information about a specific card
 - `codecks_create_card` - Create a new card with content, properties, and assignments
+- `codecks_bulk_update_cards` - Bulk update card status and/or move cards to a deck
 
 ### Deck Operations
 
 - `codecks_list_decks` - List all decks, optionally filtered by project
 - `codecks_get_deck` - Get detailed information about a specific deck
+- `codecks_create_deck` - Create a new deck in a project
+- `codecks_add_decks_to_space_after` - Reorder decks within a space
 
 ### Project & Milestone Operations
 

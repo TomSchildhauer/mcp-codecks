@@ -309,17 +309,27 @@ Error Handling:
       const client = getClient();
 
       const data = {
-        content: params.content,
-        deckId: params.deck_id || null,
+        sessionId: params.session_id || undefined,
         assigneeId: params.assignee_id || null,
-        effort: params.effort || 0,
-        priority: params.priority || null,
+        content: params.content,
+        subscribeCreator: params.subscribe_creator,
+        deckId: params.deck_id || null,
+        putInQueue: params.put_in_queue,
+        addAsBookmark: params.add_as_bookmark,
         milestoneId: params.milestone_id || null,
-        putOnHand: params.put_on_hand,
+        sprintId: params.sprint_id || null,
+        masterTags: params.master_tags || [],
+        attachments: params.attachments || [],
+        effort: params.effort ?? null,
+        priority: params.priority || null,
+        childCards: params.child_cards || [],
+        inDeps: params.in_deps || [],
+        outDeps: params.out_deps || [],
+        isDoc: params.is_doc,
+        parentCardId: params.parent_card_id || null,
         userId: params.user_id,
-        masterTags: [],
-        attachments: [],
-        childCards: []
+        fakeCoverFileId: params.fake_cover_file_id || null,
+        putOnHand: params.put_on_hand
       };
 
       const response = await client.dispatch("cards/create", data);
@@ -329,6 +339,62 @@ Error Handling:
           type: "text", 
           text: `Card created successfully! ID: ${response.cardId || response.id}` 
         }],
+        structuredContent: response
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_bulk_update_cards
+// ============================================================================
+server.registerTool(
+  "codecks_bulk_update_cards",
+  {
+    title: "Bulk Update Codecks Cards",
+    description: `Update multiple cards at once (status change and/or move to deck).
+
+Args:
+  - ids (string[]): Card IDs to update
+  - status (enum, optional): New workflow status
+  - deck_id (string, optional): Move cards to this deck
+  - session_id (string, optional): Client session ID from web app
+
+Returns:
+  API response payload with update results.`,
+    inputSchema: schemas.BulkUpdateCardsSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.BulkUpdateCardsInput) => {
+    try {
+      const client = getClient();
+
+      const data: Record<string, any> = {
+        sessionId: params.session_id || undefined,
+        ids: params.ids
+      };
+
+      if (params.status) {
+        data.status = params.status;
+      }
+
+      if (params.deck_id) {
+        data.deckId = params.deck_id;
+      }
+
+      const response = await client.dispatch("cards/bulkUpdate", data);
+
+      return {
+        content: [{ type: "text", text: "Cards updated successfully." }],
         structuredContent: response
       };
     } catch (error) {
@@ -477,6 +543,112 @@ Returns:
       return {
         content: [{ type: "text", text: formatted }],
         structuredContent: params.response_format === ResponseFormat.JSON ? deck : undefined
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_create_deck
+// ============================================================================
+server.registerTool(
+  "codecks_create_deck",
+  {
+    title: "Create Codecks Deck",
+    description: `Create a new deck in Codecks.
+
+Args:
+  - title (string): Deck title
+  - project_id (string): Project ID for the deck
+  - user_id (string): Your user ID
+  - space_id (number): Space ID
+  - cover_file_data (object, optional): Cover file metadata
+  - session_id (string, optional): Client session ID from web app
+
+Returns:
+  API response payload with the created deck.`,
+    inputSchema: schemas.CreateDeckSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.CreateDeckInput) => {
+    try {
+      const client = getClient();
+
+      const data = {
+        sessionId: params.session_id || undefined,
+        title: params.title,
+        coverFileData: params.cover_file_data ?? null,
+        projectId: params.project_id,
+        userId: params.user_id,
+        spaceId: params.space_id
+      };
+
+      const response = await client.dispatch("decks/create", data);
+
+      return {
+        content: [{ type: "text", text: "Deck created successfully." }],
+        structuredContent: response
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_add_decks_to_space_after
+// ============================================================================
+server.registerTool(
+  "codecks_add_decks_to_space_after",
+  {
+    title: "Reorder Decks in a Space",
+    description: `Move decks to a position after a target deck inside a space.
+
+Args:
+  - deck_ids (string[]): Deck IDs to move
+  - target_id (string): Target deck ID to insert after
+  - target_project_id (string): Target project ID
+  - target_space_id (number): Target space ID
+  - session_id (string, optional): Client session ID from web app
+
+Returns:
+  API response payload with ordering results.`,
+    inputSchema: schemas.AddDecksToSpaceAfterSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.AddDecksToSpaceAfterInput) => {
+    try {
+      const client = getClient();
+
+      const data = {
+        sessionId: params.session_id || undefined,
+        deckIds: params.deck_ids,
+        targetId: params.target_id,
+        targetProjectId: params.target_project_id,
+        targetSpaceId: params.target_space_id
+      };
+
+      const response = await client.dispatch("decks/addToSpaceAfter", data);
+
+      return {
+        content: [{ type: "text", text: "Decks reordered successfully." }],
+        structuredContent: response
       };
     } catch (error) {
       return {

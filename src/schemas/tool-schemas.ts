@@ -38,6 +38,17 @@ export const ListCardsSchema = z.object({
   response_format: ResponseFormatSchema
 }).strict();
 
+export const BulkUpdateCardsSchema = z.object({
+  ids: z.array(z.string()).min(1).describe("Card IDs to update"),
+  status: z.enum(["unassigned", "assigned", "started", "review", "blocked", "done"]).optional()
+    .describe("Updated workflow status"),
+  deck_id: z.string().optional().describe("Move cards to the specified deck ID"),
+  session_id: z.string().optional().describe("Client session ID from web app")
+}).strict().refine(
+  (value) => Boolean(value.status || value.deck_id),
+  { message: "Provide at least one of status or deck_id." }
+);
+
 export const GetCardSchema = z.object({
   card_id: z.string().describe("The card ID to retrieve"),
   response_format: ResponseFormatSchema
@@ -50,7 +61,20 @@ export const CreateCardSchema = z.object({
   effort: z.number().int().min(0).optional().describe("Effort/complexity points"),
   priority: z.enum(["a", "b", "c"]).optional().describe("Priority: a (high), b (medium), c (low)"),
   milestone_id: z.string().optional().describe("Milestone to assign card to"),
+  sprint_id: z.string().optional().describe("Sprint to assign card to"),
   put_on_hand: z.boolean().default(false).describe("Whether to add card to your hand"),
+  put_in_queue: z.boolean().default(false).describe("Whether to add card to queue"),
+  add_as_bookmark: z.boolean().default(false).describe("Whether to add card as bookmark"),
+  subscribe_creator: z.boolean().default(false).describe("Whether creator is subscribed to card"),
+  is_doc: z.boolean().default(false).describe("Create card as a doc card"),
+  parent_card_id: z.string().optional().describe("Parent card ID"),
+  fake_cover_file_id: z.string().optional().describe("Fake cover file ID"),
+  session_id: z.string().optional().describe("Client session ID from web app"),
+  master_tags: z.array(z.string()).optional().describe("Tag IDs to assign to card"),
+  attachments: z.array(z.any()).optional().describe("Attachment objects to include"),
+  child_cards: z.array(z.string()).optional().describe("Child card IDs"),
+  in_deps: z.array(z.string()).optional().describe("Inbound dependency card IDs"),
+  out_deps: z.array(z.string()).optional().describe("Outbound dependency card IDs"),
   user_id: z.string().describe("Your user ID (required for creating cards)")
 }).strict();
 
@@ -74,6 +98,23 @@ export const ListDecksSchema = z.object({
 export const GetDeckSchema = z.object({
   deck_id: z.string().describe("The deck ID to retrieve"),
   response_format: ResponseFormatSchema
+}).strict();
+
+export const CreateDeckSchema = z.object({
+  title: z.string().min(1).describe("Deck title"),
+  project_id: z.string().describe("Project ID for the deck"),
+  user_id: z.string().describe("Your user ID"),
+  space_id: z.number().int().describe("Space ID"),
+  cover_file_data: z.any().optional().describe("Cover file metadata (optional)"),
+  session_id: z.string().optional().describe("Client session ID from web app")
+}).strict();
+
+export const AddDecksToSpaceAfterSchema = z.object({
+  deck_ids: z.array(z.string()).min(1).describe("Deck IDs to move"),
+  target_id: z.string().describe("Target deck ID to insert after"),
+  target_project_id: z.string().describe("Target project ID"),
+  target_space_id: z.number().int().describe("Target space ID"),
+  session_id: z.string().optional().describe("Client session ID from web app")
 }).strict();
 
 // Project schemas
@@ -102,8 +143,11 @@ export type ListCardsInput = z.infer<typeof ListCardsSchema>;
 export type GetCardInput = z.infer<typeof GetCardSchema>;
 export type CreateCardInput = z.infer<typeof CreateCardSchema>;
 export type UpdateCardInput = z.infer<typeof UpdateCardSchema>;
+export type BulkUpdateCardsInput = z.infer<typeof BulkUpdateCardsSchema>;
 export type ListDecksInput = z.infer<typeof ListDecksSchema>;
 export type GetDeckInput = z.infer<typeof GetDeckSchema>;
+export type CreateDeckInput = z.infer<typeof CreateDeckSchema>;
+export type AddDecksToSpaceAfterInput = z.infer<typeof AddDecksToSpaceAfterSchema>;
 export type ListProjectsInput = z.infer<typeof ListProjectsSchema>;
 export type ListMilestonesInput = z.infer<typeof ListMilestonesSchema>;
 export type GetMilestoneInput = z.infer<typeof GetMilestoneSchema>;
