@@ -1065,7 +1065,7 @@ registerAutoTools({
 // Transport Setup
 // ============================================================================
 
-async function runStdio() {
+function validateEnvironment(): void {
   const authToken = process.env.CODECKS_AUTH_TOKEN;
   const subdomain = process.env.CODECKS_ACCOUNT_SUBDOMAIN;
 
@@ -1075,25 +1075,39 @@ async function runStdio() {
     console.error("  - CODECKS_ACCOUNT_SUBDOMAIN: Your organization subdomain");
     process.exit(1);
   }
+}
 
+async function runStdio() {
+  validateEnvironment();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Codecks MCP server running via stdio");
 }
 
 async function runHTTP() {
-  const authToken = process.env.CODECKS_AUTH_TOKEN;
-  const subdomain = process.env.CODECKS_ACCOUNT_SUBDOMAIN;
+  validateEnvironment();
 
-  if (!authToken || !subdomain) {
-    console.error("ERROR: Required environment variables:");
-    console.error("  - CODECKS_AUTH_TOKEN: Your Codecks API token");
-    console.error("  - CODECKS_ACCOUNT_SUBDOMAIN: Your organization subdomain");
-    process.exit(1);
+  const httpSecret = process.env.MCP_HTTP_SECRET;
+  if (!httpSecret) {
+    console.error("WARNING: MCP_HTTP_SECRET not set. HTTP endpoint will be unauthenticated!");
+    console.error("Set MCP_HTTP_SECRET environment variable to enable authentication.");
   }
 
   const app = express();
   app.use(express.json());
+
+  // Authentication middleware for HTTP transport
+  if (httpSecret) {
+    app.use('/mcp', (req, res, next) => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || authHeader !== `Bearer ${httpSecret}`) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      next();
+    });
+  }
+
 
   app.post('/mcp', async (req, res) => {
     try {

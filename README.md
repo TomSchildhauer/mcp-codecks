@@ -182,12 +182,26 @@ codecks-mcp-server/
 │   ├── services/
 │   │   └── codecks-client.ts # Codecks API client
 │   ├── schemas/
-│   │   └── tool-schemas.ts   # Zod validation schemas
+│   │   ├── tool-schemas.ts   # Zod validation schemas
+│   │   └── codecks-api-schema.json # Generated API schema
 │   └── utils/
-│       └── format.ts         # Response formatting utilities
+│       ├── format.ts         # Response formatting utilities
+│       ├── query-builder.ts  # Query construction and denormalization
+│       ├── auto-tools.ts     # Auto-generated list/get tools
+│       └── schema.ts         # Schema loader
+├── scripts/
+│   └── generate-api-schema.mjs # Schema generation from API docs
+├── tests/
+│   ├── unit/                 # Unit tests (100% coverage)
+│   └── integration/          # Integration tests
+├── docs/
+│   └── codecks-api/          # Codecks API documentation
 ├── dist/                     # Compiled JavaScript
+├── coverage/                 # Test coverage reports
 ├── package.json
 ├── tsconfig.json
+├── vitest.config.ts
+├── eslint.config.js
 └── README.md
 ```
 
