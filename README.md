@@ -88,11 +88,13 @@ npm run dev
 ### Deck Operations
 
 - `codecks_list_decks` - List all decks, optionally filtered by project
+- `codecks_get_deck` - Get detailed information about a specific deck
 
 ### Project & Milestone Operations
 
 - `codecks_list_projects` - List all projects (with optional archived projects)
 - `codecks_list_milestones` - List all milestones with due dates
+- `codecks_get_milestone` - Get detailed information about a specific milestone
 
 ### User Operations
 

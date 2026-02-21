@@ -1,0 +1,1959 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Codecks API Schema",
+  "description": "Structured schema for Codecks API models, fields, and relations",
+  "version": "1.0.0",
+  "generatedAt": "2026-02-21T22:24:14.616Z",
+  "source": "docs/codecks-api/api-reference.md",
+  "models": {
+    "_root": {
+      "type": "root",
+      "fields": {},
+      "relations": {
+        "releases": {
+          "type": "release",
+          "cardinality": "many"
+        },
+        "accountOnboardingSteps": {
+          "type": "accountOnboardingStep",
+          "cardinality": "many"
+        },
+        "apps": {
+          "type": "app",
+          "cardinality": "many"
+        },
+        "account": {
+          "type": "account",
+          "cardinality": "one"
+        },
+        "loggedInUser": {
+          "type": "user",
+          "cardinality": "one"
+        },
+        "cardsStatusHistory": {
+          "type": "cardsStatusHistory",
+          "cardinality": "many"
+        },
+        "cardsEffortHistory": {
+          "type": "cardsEffortHistory",
+          "cardinality": "many"
+        },
+        "cardsFinishedHistory": {
+          "type": "cardsFinishedHistory",
+          "cardinality": "many"
+        },
+        "cardsTimeToFinished": {
+          "type": "cardsTimeToFinished",
+          "cardinality": "many"
+        }
+      }
+    },
+    "accountOnboardingStep": {
+      "type": "model",
+      "fields": {
+        "chapter": "string",
+        "description": "string",
+        "milestone": "string",
+        "roles": "array",
+        "sortValue": "string",
+        "status": "string",
+        "title": "string",
+        "variants": "array",
+        "xp": "int"
+      },
+      "relations": {}
+    },
+    "accountOnboarding": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "steps": "json",
+        "variants": "array"
+      },
+      "relations": {}
+    },
+    "accountRole": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "lastChangedAt": "date",
+        "role": "string",
+        "roleAsPrio": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "accountUserAchievement": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "context": "json",
+        "user": "user",
+        "value": "json"
+      },
+      "relations": {}
+    },
+    "accountUserSetting": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "inboxDeck": "deck",
+        "startWeekdayOverwrite": "unknown",
+        "timelineScaleTypeOverwrite": "unknown",
+        "user": "user",
+        "wantsWeeklyDigestMail": "bool"
+      },
+      "relations": {}
+    },
+    "account": {
+      "type": "model",
+      "fields": {
+        "activeFeatureFlags": "json",
+        "activeProjectCount": "int",
+        "allowInheritHeroCover": "bool",
+        "attachmentCoverMode": "string",
+        "billingCity": "string",
+        "billingCountryCode": "string",
+        "billingEmail": "string",
+        "billingLine1": "string",
+        "billingLine2": "string",
+        "billingName": "string",
+        "billingType": "string",
+        "billingZip": "string",
+        "coupon": "json",
+        "createdAt": "date",
+        "defaultInboxDeck": "deck",
+        "dependenciesEnabled": "bool",
+        "disabledAt": "date",
+        "disabledBy": "user",
+        "effortScale": "json",
+        "fallbackEffort": "int",
+        "hideCompletedCardCountForDecks": "bool",
+        "isDisabled": "bool",
+        "isLearning": "bool",
+        "isNonProfit": "bool",
+        "maxHandSlotCount": "int",
+        "maxTimeTrackingSegmentMsDuration": "int",
+        "milestonesEnabled": "bool",
+        "name": "string",
+        "netGiftAmount": "int",
+        "offeringTrial": "bool",
+        "persona": "string",
+        "planOverwrites": "json",
+        "priorityLabels": "json",
+        "seats": "int",
+        "sprintsEnabled": "bool",
+        "staffPermission": "string",
+        "staffQuestMode": "string",
+        "startWeekday": "string",
+        "statusChangeDurations": "json",
+        "subdomain": "string",
+        "timeTrackingMode": "string",
+        "timeTrackingSwimLaneInfo": "bool",
+        "timelineScaleType": "string",
+        "totalMediaByteUsage": "bigint",
+        "visionBoardEnabled": "bool",
+        "workdays": "json",
+        "workflowMode": "string"
+      },
+      "relations": {
+        "cards": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "invoices": {
+          "type": "invoice",
+          "cardinality": "many"
+        },
+        "cardPresets": {
+          "type": "cardPreset",
+          "cardinality": "many"
+        },
+        "attachments": {
+          "type": "attachment",
+          "cardinality": "many"
+        },
+        "discordGuilds": {
+          "type": "discordGuild",
+          "cardinality": "many"
+        },
+        "timeTrackingSegments": {
+          "type": "timeTrackingSegment",
+          "cardinality": "many"
+        },
+        "workflowItems": {
+          "type": "workflowItem",
+          "cardinality": "many"
+        },
+        "deckAssignments": {
+          "type": "deckAssignment",
+          "cardinality": "many"
+        },
+        "assigneeAssignments": {
+          "type": "assigneeAssignment",
+          "cardinality": "many"
+        },
+        "assigneeDeckAssignments": {
+          "type": "assigneeDeckAssignment",
+          "cardinality": "many"
+        },
+        "wizards": {
+          "type": "wizard",
+          "cardinality": "many"
+        },
+        "milestones": {
+          "type": "milestone",
+          "cardinality": "many"
+        },
+        "sprints": {
+          "type": "sprint",
+          "cardinality": "many"
+        },
+        "sprintConfigs": {
+          "type": "sprintConfig",
+          "cardinality": "many"
+        },
+        "handCards": {
+          "type": "handCard",
+          "cardinality": "many"
+        },
+        "resolvables": {
+          "type": "resolvable",
+          "cardinality": "many"
+        },
+        "cardUpvotes": {
+          "type": "cardUpvote",
+          "cardinality": "many"
+        },
+        "resolvableParticipants": {
+          "type": "resolvableParticipant",
+          "cardinality": "many"
+        },
+        "userReportSettings": {
+          "type": "userReportSetting",
+          "cardinality": "many"
+        },
+        "cardOrders": {
+          "type": "cardOrder",
+          "cardinality": "many"
+        },
+        "accountUserAchievements": {
+          "type": "accountUserAchievement",
+          "cardinality": "many"
+        },
+        "userInviteCodes": {
+          "type": "userInviteCode",
+          "cardinality": "many"
+        },
+        "visionBoards": {
+          "type": "visionBoard",
+          "cardinality": "many"
+        },
+        "deckSubscriptions": {
+          "type": "deckSubscription",
+          "cardinality": "many"
+        },
+        "appInstallations": {
+          "type": "appInstallation",
+          "cardinality": "many"
+        },
+        "files": {
+          "type": "file",
+          "cardinality": "many"
+        },
+        "decks": {
+          "type": "deck",
+          "cardinality": "many"
+        },
+        "queueEntries": {
+          "type": "queueEntry",
+          "cardinality": "many"
+        },
+        "visionBoardQueries": {
+          "type": "visionBoardQuery",
+          "cardinality": "many"
+        },
+        "anyDecks": {
+          "type": "deck",
+          "cardinality": "many"
+        },
+        "projects": {
+          "type": "project",
+          "cardinality": "many"
+        },
+        "archivedProjects": {
+          "type": "project",
+          "cardinality": "many"
+        },
+        "anyProjects": {
+          "type": "project",
+          "cardinality": "many"
+        },
+        "roles": {
+          "type": "accountRole",
+          "cardinality": "many"
+        },
+        "invitations": {
+          "type": "userInvitation",
+          "cardinality": "many"
+        },
+        "githubIntegration": {
+          "type": "integration",
+          "cardinality": "one"
+        },
+        "slackIntegration": {
+          "type": "integration",
+          "cardinality": "one"
+        },
+        "affiliateCodes": {
+          "type": "affiliateCode",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        },
+        "stripeAccountSync": {
+          "type": "stripeAccountSync",
+          "cardinality": "one"
+        },
+        "accountOnboarding": {
+          "type": "accountOnboarding",
+          "cardinality": "one"
+        }
+      }
+    },
+    "activeTimeTracker": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "activity": {
+      "type": "model",
+      "fields": {
+        "card": "card",
+        "changer": "user",
+        "createdAt": "date",
+        "data": "json",
+        "deck": "deck",
+        "isRemovedFromDeckEntry": "bool",
+        "isRemovedFromMilestoneEntry": "bool",
+        "isRemovedFromSprintEntry": "bool",
+        "milestone": "milestone",
+        "project": "project",
+        "sprint": "sprint",
+        "type": "string"
+      },
+      "relations": {}
+    },
+    "affiliateCodeStat": {
+      "type": "model",
+      "fields": {
+        "affiliateCode": "affiliateCode",
+        "month": "int",
+        "newVisitors": "int",
+        "revenue": "int",
+        "signups": "int",
+        "visits": "int",
+        "year": "int"
+      },
+      "relations": {}
+    },
+    "affiliateCode": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "code": "string",
+        "createdAt": "date",
+        "creator": "user",
+        "isDeleted": "bool",
+        "isDisabled": "bool",
+        "label": "string",
+        "message": "string",
+        "remainingRedemptions": "int",
+        "reward": "json",
+        "validUntil": "unknown",
+        "vanityUrl": "string"
+      },
+      "relations": {
+        "stats": {
+          "type": "affiliateCodeStat",
+          "cardinality": "many"
+        }
+      }
+    },
+    "appInstallation": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "app": "app",
+        "createdAt": "date",
+        "installer": "user"
+      },
+      "relations": {}
+    },
+    "app": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "name": "string",
+        "payload": "json"
+      },
+      "relations": {}
+    },
+    "assigneeAssignment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "assignedBy": "user",
+        "assignee": "user",
+        "lastAssignedAt": "date"
+      },
+      "relations": {}
+    },
+    "assigneeDeckAssignment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "assignedBy": "user",
+        "assignee": "user",
+        "deck": "deck",
+        "lastAssignedAt": "date"
+      },
+      "relations": {}
+    },
+    "attachment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "content": "string",
+        "createdAt": "date",
+        "creator": "user",
+        "file": "file",
+        "title": "string"
+      },
+      "relations": {}
+    },
+    "autoFinishedTimeTrackingSegment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "timeTrackingSegment": "timeTrackingSegment",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "cardDiffNotification": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "asOwner": "bool",
+        "card": "card",
+        "changers": "array",
+        "changes": "json",
+        "createdAt": "date",
+        "lastUpdatedAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "cardHistory": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "changer": "user",
+        "diff": "json",
+        "version": "int",
+        "versionCreatedAt": "date"
+      },
+      "relations": {}
+    },
+    "cardOrderInDeck": {
+      "type": "model",
+      "fields": {
+        "card": "card",
+        "changer": "user",
+        "deck": "deck",
+        "sortIndex": "string"
+      },
+      "relations": {}
+    },
+    "cardOrder": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "label": "string",
+        "sortValue": "string"
+      },
+      "relations": {}
+    },
+    "cardPreset": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "creator": "user",
+        "data": "json",
+        "name": "string"
+      },
+      "relations": {}
+    },
+    "cardSubscription": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "cardUpvote": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "discordUserInfo": "json",
+        "type": "string",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "card": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "assignee": "user",
+        "checkboxInfo": "array",
+        "checkboxStats": "json",
+        "childCardInfo": "string",
+        "content": "string",
+        "coverFile": "file",
+        "createdAt": "date",
+        "creator": "user",
+        "deck": "deck",
+        "derivedStatus": "string",
+        "discordGuild": "discordGuild",
+        "dueDate": "day",
+        "effort": "int",
+        "embeds": "json",
+        "hasBlockingDeps": "bool",
+        "isDoc": "bool",
+        "isPublic": "bool",
+        "lastUpdatedAt": "date",
+        "legacyProject": "project",
+        "legacyProjectSeq": "int",
+        "masterTags": "array",
+        "mentionedUsers": "array",
+        "meta": "json",
+        "milestone": "milestone",
+        "parentCard": "card",
+        "priority": "unknown",
+        "sourceWorkflowItem": "workflowItem",
+        "sprint": "sprint",
+        "status": "string",
+        "tags": "array",
+        "title": "string",
+        "version": "int",
+        "visibility": "string",
+        "visionBoard": "visionBoard"
+      },
+      "relations": {
+        "resolvables": {
+          "type": "resolvable",
+          "cardinality": "many"
+        },
+        "handCards": {
+          "type": "handCard",
+          "cardinality": "many"
+        },
+        "timeTrackingSegments": {
+          "type": "timeTrackingSegment",
+          "cardinality": "many"
+        },
+        "cardSubscriptions": {
+          "type": "cardSubscription",
+          "cardinality": "many"
+        },
+        "cardOrders": {
+          "type": "cardOrder",
+          "cardinality": "many"
+        },
+        "resolvableEntries": {
+          "type": "resolvableEntry",
+          "cardinality": "many"
+        },
+        "queueEntries": {
+          "type": "queueEntry",
+          "cardinality": "many"
+        },
+        "attachments": {
+          "type": "attachment",
+          "cardinality": "many"
+        },
+        "diffs": {
+          "type": "cardHistory",
+          "cardinality": "many"
+        },
+        "totalTimeTrackingSums": {
+          "type": "timeTrackingSum",
+          "cardinality": "one"
+        },
+        "userTimeTrackingSums": {
+          "type": "timeTrackingSum",
+          "cardinality": "many"
+        },
+        "childCards": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "inDeps": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "outDeps": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "cardReferences": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "upvotes": {
+          "type": "cardUpvote",
+          "cardinality": "many"
+        }
+      }
+    },
+    "cardsEffortHistory": {
+      "type": "model",
+      "fields": {
+        "cardCount": "bigint",
+        "date": "day",
+        "effortSum": "bigint"
+      },
+      "relations": {}
+    },
+    "cardsFinishedHistory": {
+      "type": "model",
+      "fields": {
+        "assignee": "user",
+        "cardCount": "bigint",
+        "date": "day",
+        "effortSum": "bigint"
+      },
+      "relations": {}
+    },
+    "cardsStatusHistory": {
+      "type": "model",
+      "fields": {
+        "count": "int",
+        "date": "day",
+        "status": "string"
+      },
+      "relations": {}
+    },
+    "cardsTimeToFinished": {
+      "type": "model",
+      "fields": {
+        "assignee": "user",
+        "card": "card",
+        "doneAt": "date",
+        "effort": "int",
+        "startedAt": "date"
+      },
+      "relations": {}
+    },
+    "dailyDiscordGuildVoteMembership": {
+      "type": "model",
+      "fields": {
+        "discordGuild": "discordGuild",
+        "membershipCount": "int",
+        "t": "date"
+      },
+      "relations": {}
+    },
+    "dailyPublicProjectMembership": {
+      "type": "model",
+      "fields": {
+        "membershipCount": "int",
+        "project": "project",
+        "t": "date"
+      },
+      "relations": {}
+    },
+    "publicProjectVisit": {
+      "type": "model",
+      "fields": {
+        "project": "project",
+        "t": "date",
+        "topReferrers": "json",
+        "visitCounts": "int"
+      },
+      "relations": {}
+    },
+    "deckAssignment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "deck": "deck",
+        "lastAssignedAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "deckGuardian": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "deck": "deck",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "deckSubscription": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "deck": "deck",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "deck": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "content": "string",
+        "coverColor": "unknown",
+        "coverFile": "file",
+        "createdAt": "date",
+        "creator": "user",
+        "deckType": "string",
+        "defaultCard": "json",
+        "defaultProjectTag": "projectTag",
+        "description": "string",
+        "descriptionCoverFile": "file",
+        "handSyncEnabled": "bool",
+        "hasGuardians": "bool",
+        "isDeleted": "bool",
+        "isOnboardingDeck": "bool",
+        "manualOrderLabels": "json",
+        "milestone": "milestone",
+        "preferredOrder": "unknown",
+        "project": "project",
+        "sortValue": "string",
+        "spaceId": "int",
+        "stats": "json",
+        "stickyDefaultProjectTag": "bool",
+        "title": "string",
+        "workflowItemOrderLabels": "json"
+      },
+      "relations": {
+        "cards": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "workflowItems": {
+          "type": "workflowItem",
+          "cardinality": "many"
+        },
+        "cardOrderInDecks": {
+          "type": "cardOrderInDeck",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        },
+        "guardians": {
+          "type": "deckGuardian",
+          "cardinality": "many"
+        }
+      }
+    },
+    "discordGuild": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "discordGuildId": "string",
+        "guildIconId": "string",
+        "guildName": "string",
+        "karmaRoleThresholds": "json",
+        "removeCommandEmoji": "string",
+        "removeCommandEnabled": "string",
+        "removeCommandRoleId": "string",
+        "scope": "string",
+        "userMapping": "json"
+      },
+      "relations": {
+        "slashCommands": {
+          "type": "discordSlashCommand",
+          "cardinality": "many"
+        },
+        "projectNotifications": {
+          "type": "discordProjectNotification",
+          "cardinality": "many"
+        },
+        "dailyDiscordGuildVoteMemberships": {
+          "type": "dailyDiscordGuildVoteMembership",
+          "cardinality": "many"
+        },
+        "members": {
+          "type": "discordMember",
+          "cardinality": "many"
+        }
+      }
+    },
+    "discordMember": {
+      "type": "model",
+      "fields": {
+        "avatar": "string",
+        "createdAt": "date",
+        "deckyScore": "int",
+        "discordGuild": "discordGuild",
+        "discordUserId": "string",
+        "discriminator": "string",
+        "name": "string",
+        "nick": "string"
+      },
+      "relations": {}
+    },
+    "discordProjectNotification": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "disabledTypes": "json",
+        "discordChannelId": "string",
+        "discordGuild": "discordGuild",
+        "project": "project"
+      },
+      "relations": {}
+    },
+    "discordSlashCommand": {
+      "type": "model",
+      "fields": {
+        "autoAddRoleToThread": "string",
+        "channelId": "string",
+        "deck": "deck",
+        "description": "string",
+        "discordGuild": "discordGuild",
+        "karmaForCompletion": "int",
+        "leaderboard": "json",
+        "maxFileSizeInBytes": "int",
+        "name": "string",
+        "permissions": "json",
+        "reaction": "string",
+        "reactionThreshold": "int",
+        "statusMessages": "json",
+        "statusTargetChannelId": "string"
+      },
+      "relations": {}
+    },
+    "dueCard": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "file": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "deletedAt": "date",
+        "deletedBy": "user",
+        "isDeleted": "bool",
+        "meta": "json",
+        "name": "string",
+        "selfHosted": "bool",
+        "size": "string",
+        "uploader": "user",
+        "url": "string"
+      },
+      "relations": {}
+    },
+    "handCard": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "sortIndex": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "integration": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "creator": "user",
+        "disabled": "string",
+        "type": "string",
+        "user": "user",
+        "userData": "json",
+        "version": "int"
+      },
+      "relations": {}
+    },
+    "invoice": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "chargeData": "json",
+        "charged": "int",
+        "createdAt": "date",
+        "invoiceNumber": "string",
+        "subtotal": "int",
+        "total": "int",
+        "url": "string"
+      },
+      "relations": {}
+    },
+    "lastSeenCardUpvote": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "lastSeenAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "milestoneProgress": {
+      "type": "model",
+      "fields": {
+        "milestone": "milestone",
+        "progress": "json"
+      },
+      "relations": {}
+    },
+    "milestoneProject": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "milestone": "milestone",
+        "project": "project"
+      },
+      "relations": {}
+    },
+    "milestone": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "color": "string",
+        "coverFile": "file",
+        "createdAt": "date",
+        "creator": "user",
+        "date": "day",
+        "description": "unknown",
+        "handSyncEnabled": "bool",
+        "isDeleted": "bool",
+        "isGlobal": "bool",
+        "manualOrderLabels": "json",
+        "name": "string",
+        "preferredOrder": "unknown",
+        "startDate": "day",
+        "stats": "json",
+        "userCapacities": "json"
+      },
+      "relations": {
+        "milestoneProjects": {
+          "type": "milestoneProject",
+          "cardinality": "many"
+        },
+        "cards": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        },
+        "progress": {
+          "type": "milestoneProgress",
+          "cardinality": "many"
+        }
+      }
+    },
+    "pinnedMilestone": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "milestone": "milestone",
+        "sprint": "sprint",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "projectOrder": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "project": "project",
+        "sortIndex": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "projectSelection": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "project": "project",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "projectTag": {
+      "type": "model",
+      "fields": {
+        "color": "string",
+        "createdAt": "date",
+        "description": "string",
+        "emoji": "string",
+        "project": "project",
+        "tag": "string"
+      },
+      "relations": {}
+    },
+    "projectUserSetting": {
+      "type": "model",
+      "fields": {
+        "project": "project",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "projectUser": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "project": "project",
+        "projectRole": "string",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "project": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "allowUpvotes": "bool",
+        "commentsArePublic": "bool",
+        "coverFile": "file",
+        "createdAt": "date",
+        "defaultUserAccess": "string",
+        "effortIcon": "unknown",
+        "isPublic": "bool",
+        "markerColor": "unknown",
+        "name": "string",
+        "publicBackgroundColor": "string",
+        "publicBackgroundImage": "file",
+        "publicBannerFile": "file",
+        "publicHeading": "string",
+        "publicIsExplicit": "bool",
+        "publicLayoutVersion": "int",
+        "publicMessage": "string",
+        "publicPath": "string",
+        "publicRegistryAgreement": "bool",
+        "publicTileFile": "file",
+        "spaces": "json",
+        "visibility": "string"
+      },
+      "relations": {
+        "decks": {
+          "type": "deck",
+          "cardinality": "many"
+        },
+        "milestoneProjects": {
+          "type": "milestoneProject",
+          "cardinality": "many"
+        },
+        "sprintProjects": {
+          "type": "sprintProject",
+          "cardinality": "many"
+        },
+        "publicProjectVisits": {
+          "type": "publicProjectVisit",
+          "cardinality": "many"
+        },
+        "dailyPublicProjectMembership": {
+          "type": "dailyPublicProjectMembership",
+          "cardinality": "many"
+        },
+        "publicProjectMemberships": {
+          "type": "publicProjectMembership",
+          "cardinality": "many"
+        },
+        "cardUpvotes": {
+          "type": "cardUpvote",
+          "cardinality": "many"
+        },
+        "tags": {
+          "type": "projectTag",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        },
+        "explicitProjectUsers": {
+          "type": "projectUser",
+          "cardinality": "many"
+        },
+        "access": {
+          "type": "userProjectAccess",
+          "cardinality": "many"
+        },
+        "publicProjectInfo": {
+          "type": "publicProjectInfo",
+          "cardinality": "one"
+        }
+      }
+    },
+    "publicProjectInfo": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "activities7d": "string",
+        "cardCount": "string",
+        "cardDoneStreak": "string",
+        "lastActivityAt": "string",
+        "project": "project",
+        "visits7d": "string"
+      },
+      "relations": {}
+    },
+    "publicProjectMembership": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "digestFrequencyInDays": "int",
+        "project": "project",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "queueEntry": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "cardDoneAt": "date",
+        "createdAt": "date",
+        "sortIndex": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "queueSelection": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "queueUser": "user",
+        "sortIndex": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "release": {
+      "type": "model",
+      "fields": {
+        "content": "string",
+        "createdAt": "date",
+        "isLive": "string",
+        "title": "string",
+        "version": "string"
+      },
+      "relations": {}
+    },
+    "resolvableEntryHistory": {
+      "type": "model",
+      "fields": {
+        "author": "user",
+        "content": "string",
+        "entry": "resolvableEntry",
+        "lastChangedAt": "date",
+        "resolvable": "resolvable",
+        "version": "int"
+      },
+      "relations": {}
+    },
+    "resolvableEntryReaction": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "isPublic": "bool",
+        "resolvable": "resolvable",
+        "resolvableEntry": "resolvableEntry",
+        "user": "user",
+        "value": "json"
+      },
+      "relations": {}
+    },
+    "resolvableEntry": {
+      "type": "model",
+      "fields": {
+        "author": "user",
+        "card": "card",
+        "content": "string",
+        "createdAt": "date",
+        "lastChangedAt": "date",
+        "meta": "json",
+        "resolvable": "resolvable",
+        "version": "int"
+      },
+      "relations": {
+        "reactions": {
+          "type": "resolvableEntryReaction",
+          "cardinality": "many"
+        },
+        "histories": {
+          "type": "resolvableEntryHistory",
+          "cardinality": "many"
+        }
+      }
+    },
+    "resolvableNotification": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "isLastParticipant": "bool",
+        "isParticipating": "bool",
+        "isSnoozing": "bool",
+        "lastUpdatedAt": "date",
+        "latestEntry": "resolvableEntry",
+        "latestSeenEntry": "resolvableEntry",
+        "remindMeOn": "date",
+        "resolvable": "resolvable",
+        "snoozeUntil": "date",
+        "unseenAuthors": "array",
+        "unseenEntryCount": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "resolvableParticipantHistory": {
+      "type": "model",
+      "fields": {
+        "addedBy": "user",
+        "done": "bool",
+        "firstJoinedAt": "string",
+        "lastChangedAt": "date",
+        "reaction": "string",
+        "resolvable": "resolvable",
+        "status": "string",
+        "user": "user",
+        "version": "int"
+      },
+      "relations": {}
+    },
+    "resolvableParticipant": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "addedBy": "user",
+        "discordUserId": "string",
+        "done": "bool",
+        "firstJoinedAt": "date",
+        "lastChangedAt": "date",
+        "resolvable": "resolvable",
+        "resolvableIsClosed": "bool",
+        "status": "string",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "resolvable": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "closedAt": "date",
+        "closedBy": "user",
+        "context": "string",
+        "contextAsPrio": "int",
+        "createdAt": "date",
+        "creator": "user",
+        "isClosed": "bool",
+        "isPublic": "bool"
+      },
+      "relations": {
+        "participants": {
+          "type": "resolvableParticipant",
+          "cardinality": "many"
+        },
+        "participantHistories": {
+          "type": "resolvableParticipantHistory",
+          "cardinality": "many"
+        },
+        "entries": {
+          "type": "resolvableEntry",
+          "cardinality": "many"
+        }
+      }
+    },
+    "savedSearch": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "forceOr": "bool",
+        "owner": "user",
+        "tokens": "array"
+      },
+      "relations": {}
+    },
+    "sprintConfigProgress": {
+      "type": "model",
+      "fields": {
+        "progress": "json",
+        "sprintConfig": "sprintConfig"
+      },
+      "relations": {}
+    },
+    "sprintConfig": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "autoAssignNewCard": "bool",
+        "autoAssignStartedCard": "bool",
+        "autoBeastModeDurationHours": "int",
+        "beastGracePeriodHours": "int",
+        "color": "string",
+        "createdAt": "date",
+        "creator": "user",
+        "endHour": "int",
+        "endHourTimezone": "string",
+        "isGlobal": "bool",
+        "moveOnFinish": "json",
+        "name": "string",
+        "preferredOrder": "unknown",
+        "sprintDurationWeeks": "int",
+        "sprintStartWeekday": "int",
+        "stopOn": "day",
+        "upcomingSprints": "int"
+      },
+      "relations": {
+        "sprintProjects": {
+          "type": "sprintProject",
+          "cardinality": "many"
+        },
+        "sprints": {
+          "type": "sprint",
+          "cardinality": "many"
+        },
+        "progress": {
+          "type": "sprintConfigProgress",
+          "cardinality": "many"
+        }
+      }
+    },
+    "sprintProgress": {
+      "type": "model",
+      "fields": {
+        "progress": "json",
+        "sprint": "sprint"
+      },
+      "relations": {}
+    },
+    "sprintProject": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "project": "project",
+        "sprintConfig": "sprintConfig"
+      },
+      "relations": {}
+    },
+    "sprint": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "autoMilestone": "milestone",
+        "completedAt": "date",
+        "coverFile": "file",
+        "createdAt": "date",
+        "creator": "user",
+        "description": "string",
+        "endDate": "day",
+        "handSyncEnabled": "bool",
+        "index": "int",
+        "isDeleted": "bool",
+        "lockedAt": "date",
+        "manualOrderLabels": "json",
+        "name": "string",
+        "sprintConfig": "sprintConfig",
+        "startDate": "day",
+        "stats": "json",
+        "userCapacities": "json"
+      },
+      "relations": {
+        "cards": {
+          "type": "card",
+          "cardinality": "many"
+        },
+        "progress": {
+          "type": "sprintProgress",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        }
+      }
+    },
+    "stripeAccountSync": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "billingCycleEnd": "date",
+        "billingCycleStart": "date",
+        "centsPerSeat": "int",
+        "euVatIdData": "json",
+        "grossActualBalance": "int",
+        "grossBonusBalance": "int",
+        "hasBeenCancelledAt": "date",
+        "netGiftBalance": "int",
+        "paymentMethod": "json",
+        "pendingPlanType": "string",
+        "planName": "string",
+        "planType": "string",
+        "repeatingCoupon": "json",
+        "status": "string",
+        "vatCountryCode": "string",
+        "vatTaxPercentage": "int"
+      },
+      "relations": {}
+    },
+    "timeTrackingSegment": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "addedManually": "bool",
+        "autoFinishedState": "string",
+        "card": "card",
+        "createdAt": "date",
+        "finishedAt": "date",
+        "modifyDurationMsBy": "int",
+        "startedAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "timeTrackingSum": {
+      "type": "model",
+      "fields": {
+        "card": "card",
+        "runningModifyDurationMsBy": "int",
+        "runningStartedAt": "date",
+        "sumMs": "int",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userDismissedHint": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "hintKey": "string",
+        "returnAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userEmail": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "email": "string",
+        "isPrimary": "bool",
+        "isVerified": "bool",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userInvitation": {
+      "type": "model",
+      "fields": {
+        "accessToProjectIds": "array",
+        "account": "account",
+        "createdAt": "date",
+        "email": "string",
+        "inviter": "user",
+        "role": "string"
+      },
+      "relations": {}
+    },
+    "userInviteCode": {
+      "type": "model",
+      "fields": {
+        "accessToProjectIds": "array",
+        "account": "account",
+        "createdAt": "date",
+        "creator": "user",
+        "isActive": "bool",
+        "role": "string",
+        "token": "string",
+        "useCount": "int",
+        "validUntil": "date"
+      },
+      "relations": {}
+    },
+    "userNotificationChannel": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "channelType": "string",
+        "createdAt": "date",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userOnboarding": {
+      "type": "model",
+      "fields": {
+        "steps": "json",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userProjectAccess": {
+      "type": "model",
+      "fields": {
+        "project": "project",
+        "projectRole": "string",
+        "role": "string",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "userTag": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "tag": "string",
+        "user": "user"
+      },
+      "relations": {}
+    },
+    "user": {
+      "type": "model",
+      "fields": {
+        "autoMeFilterCardLimit": "int",
+        "cdxRole": "string",
+        "createdAt": "date",
+        "disableAnimations": "bool",
+        "disableMovingImages": "bool",
+        "enableClickToEditCards": "bool",
+        "fullName": "unknown",
+        "hasPassword": "bool",
+        "isIntegration": "bool",
+        "lastSeenRelease": "release",
+        "name": "string",
+        "profileImage": "file",
+        "showCardIdInTimer": "bool",
+        "statusColorPalette": "string",
+        "timezone": "string",
+        "wantsConvoDigestMail": "bool",
+        "wantsDailyDigestMail": "bool",
+        "wantsNewsletter": "bool"
+      },
+      "relations": {
+        "projectOrders": {
+          "type": "projectOrder",
+          "cardinality": "many"
+        },
+        "projectSelections": {
+          "type": "projectSelection",
+          "cardinality": "many"
+        },
+        "queueSelections": {
+          "type": "queueSelection",
+          "cardinality": "many"
+        },
+        "accountRoles": {
+          "type": "accountRole",
+          "cardinality": "many"
+        },
+        "cardDiffNotifications": {
+          "type": "cardDiffNotification",
+          "cardinality": "many"
+        },
+        "resolvableNotifications": {
+          "type": "resolvableNotification",
+          "cardinality": "many"
+        },
+        "publicProjectMembership": {
+          "type": "publicProjectMembership",
+          "cardinality": "many"
+        },
+        "lastSeenCardUpvotes": {
+          "type": "lastSeenCardUpvote",
+          "cardinality": "many"
+        },
+        "dueCards": {
+          "type": "dueCard",
+          "cardinality": "many"
+        },
+        "assigneeDeckAssignments": {
+          "type": "assigneeDeckAssignment",
+          "cardinality": "many"
+        },
+        "autoFinishedTimeTrackingSegments": {
+          "type": "autoFinishedTimeTrackingSegment",
+          "cardinality": "many"
+        },
+        "savedSearches": {
+          "type": "savedSearch",
+          "cardinality": "many"
+        },
+        "activities": {
+          "type": "activity",
+          "cardinality": "many"
+        },
+        "emails": {
+          "type": "userEmail",
+          "cardinality": "many"
+        },
+        "tags": {
+          "type": "userTag",
+          "cardinality": "many"
+        },
+        "unverifiedEmails": {
+          "type": "userEmail",
+          "cardinality": "many"
+        },
+        "primaryEmail": {
+          "type": "userEmail",
+          "cardinality": "one"
+        },
+        "pinnedMilestoneNext": {
+          "type": "pinnedMilestone",
+          "cardinality": "one"
+        },
+        "explicitProjectAccess": {
+          "type": "projectUser",
+          "cardinality": "many"
+        },
+        "withProjectAccess": {
+          "type": "userProjectAccess",
+          "cardinality": "many"
+        },
+        "projectSettings": {
+          "type": "projectUserSetting",
+          "cardinality": "many"
+        },
+        "accountSettings": {
+          "type": "accountUserSetting",
+          "cardinality": "many"
+        },
+        "dismissedHints": {
+          "type": "userDismissedHint",
+          "cardinality": "many"
+        },
+        "slackIntegrations": {
+          "type": "integration",
+          "cardinality": "many"
+        },
+        "activeTimeTracker": {
+          "type": "activeTimeTracker",
+          "cardinality": "one"
+        },
+        "participations": {
+          "type": "resolvableParticipant",
+          "cardinality": "many"
+        },
+        "upvotes": {
+          "type": "cardUpvote",
+          "cardinality": "many"
+        },
+        "notificationChannels": {
+          "type": "userNotificationChannel",
+          "cardinality": "many"
+        },
+        "userOnboarding": {
+          "type": "userOnboarding",
+          "cardinality": "one"
+        }
+      },
+      "quirks": {
+        "email": {
+          "invalid": true,
+          "workaround": "Use primaryEmail relation to access userEmail.email"
+        }
+      }
+    },
+    "userReportEmail": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "email": "string",
+        "enabled": "string",
+        "userReportSetting": "userReportSetting"
+      },
+      "relations": {}
+    },
+    "userReportSetting": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "deckMapping": "json",
+        "fileSizeBytesLimit": "bigint",
+        "name": "string",
+        "prioMapping": "json"
+      },
+      "relations": {
+        "reportTokens": {
+          "type": "userReportToken",
+          "cardinality": "many"
+        }
+      }
+    },
+    "userReportToken": {
+      "type": "model",
+      "fields": {
+        "createdAt": "date",
+        "enabled": "string",
+        "label": "string",
+        "reportCount": "int",
+        "userReportSetting": "userReportSetting"
+      },
+      "relations": {}
+    },
+    "visionBoardQuery": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "card": "card",
+        "createdAt": "date",
+        "isStale": "bool",
+        "lastUsedAt": "date",
+        "payload": "json",
+        "query": "json",
+        "type": "string"
+      },
+      "relations": {}
+    },
+    "visionBoard": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "card": "card",
+        "createdAt": "date",
+        "creator": "user",
+        "isDeleted": "bool"
+      },
+      "relations": {}
+    },
+    "wizard": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "createdAt": "date",
+        "currentStep": "string",
+        "data": "json",
+        "finishedAt": "date",
+        "name": "string"
+      },
+      "relations": {}
+    },
+    "workflowItemHistory": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "changer": "user",
+        "diff": "json",
+        "version": "int",
+        "versionCreatedAt": "date"
+      },
+      "relations": {}
+    },
+    "workflowItem": {
+      "type": "model",
+      "fields": {
+        "account": "account",
+        "accountSeq": "int",
+        "assignee": "user",
+        "checkboxInfo": "array",
+        "checkboxStats": "json",
+        "content": "string",
+        "createdAt": "date",
+        "creator": "user",
+        "deck": "deck",
+        "effort": "int",
+        "label": "string",
+        "lastUpdatedAt": "date",
+        "masterTags": "array",
+        "mentionedUsers": "array",
+        "priority": "unknown",
+        "sortOrder": "string",
+        "sortValue": "string",
+        "tags": "array",
+        "targetDeck": "deck",
+        "title": "string",
+        "version": "string",
+        "visibility": "string"
+      },
+      "relations": {
+        "diffs": {
+          "type": "workflowItemHistory",
+          "cardinality": "many"
+        },
+        "inDeps": {
+          "type": "workflowItem",
+          "cardinality": "many"
+        },
+        "outDeps": {
+          "type": "workflowItem",
+          "cardinality": "many"
+        }
+      }
+    }
+  },
+  "queryOperators": {
+    "search": {
+      "valueType": "string",
+      "appliesTo": [
+        "string"
+      ],
+      "note": "Only for searchableFields"
+    },
+    "overlaps": {
+      "valueType": "array",
+      "appliesTo": [
+        "array"
+      ]
+    },
+    "has": {
+      "valueType": "any",
+      "appliesTo": [
+        "array"
+      ]
+    },
+    "contains": {
+      "valueType": "string",
+      "appliesTo": [
+        "string"
+      ]
+    },
+    "inOrNull": {
+      "valueType": "array",
+      "appliesTo": [
+        "any"
+      ]
+    },
+    "lte": {
+      "valueType": "ordinal",
+      "appliesTo": [
+        "int",
+        "date"
+      ]
+    },
+    "lt": {
+      "valueType": "ordinal",
+      "appliesTo": [
+        "int",
+        "date"
+      ]
+    },
+    "gte": {
+      "valueType": "ordinal",
+      "appliesTo": [
+        "int",
+        "date"
+      ]
+    },
+    "gt": {
+      "valueType": "ordinal",
+      "appliesTo": [
+        "int",
+        "date"
+      ]
+    },
+    "notIn": {
+      "valueType": "array",
+      "appliesTo": [
+        "any"
+      ]
+    },
+    "in": {
+      "valueType": "array",
+      "appliesTo": [
+        "any"
+      ]
+    },
+    "neq": {
+      "valueType": "any",
+      "appliesTo": [
+        "any"
+      ]
+    },
+    "eq": {
+      "valueType": "any",
+      "appliesTo": [
+        "any"
+      ]
+    }
+  },
+  "specialQueryFields": {
+    "$or": {
+      "type": "array",
+      "description": "Combines multiple queries via OR"
+    },
+    "$and": {
+      "type": "array",
+      "description": "Combines multiple queries via AND"
+    },
+    "$order": {
+      "type": "OrderExpression",
+      "description": "Sort results"
+    },
+    "$first": {
+      "type": "boolean",
+      "description": "Return singleton (requires $order)"
+    },
+    "$limit": {
+      "type": "number",
+      "max": 3000,
+      "description": "Limit results (requires $order)"
+    },
+    "$offset": {
+      "type": "number",
+      "description": "Skip results (requires $limit)"
+    }
+  },
+  "responseFormat": {
+    "normalized": true,
+    "description": "Objects are keyed by ID in response.<model> dictionary; _root contains IDs"
+  }
+}

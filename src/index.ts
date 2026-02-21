@@ -15,12 +15,24 @@ import { CodecksClient, formatError } from "./services/codecks-client.js";
 import { ResponseFormat } from "./types.js";
 import * as schemas from "./schemas/tool-schemas.js";
 import * as format from "./utils/format.js";
+import { loadSchema } from "./utils/schema.js";
+import {
+  buildIdQuery,
+  buildRelationKey,
+  buildRootQuery,
+  denormalizeById,
+  denormalizeRootRelation,
+  validateSelection,
+  type Selection
+} from "./utils/query-builder.js";
 
 // Initialize MCP server
 const server = new McpServer({
   name: "codecks-mcp-server",
   version: "1.0.0"
 });
+
+const schema = loadSchema();
 
 // Initialize Codecks client
 let client: CodecksClient;
@@ -118,30 +130,42 @@ Error Handling:
         filters.content = { op: "search", value: params.search };
       }
 
-      // Build query
+      const cardSelection: Selection[] = [
+        \"id\",
+        \"accountSeq\",
+        \"title\",
+        \"content\",
+        \"derivedStatus\",
+        \"effort\",
+        \"priority\",
+        { assignee: [\"id\", \"name\"] },
+        { deck: [\"id\", \"name\"] },
+        { milestone: [\"id\", \"name\"] },
+        \"createdAt\",
+        \"lastUpdatedAt\"
+      ];
+
+      const cardsKey = buildRelationKey(\"cards\", {
+        ...filters,
+        $order: \"-lastUpdatedAt\",
+        $limit: params.limit,
+        $offset: params.offset
+      });
+
+      const accountSelection: Selection[] = [{ [cardsKey]: cardSelection }];
+      validateSelection(schema, \"account\", accountSelection);
+
       const query = {
-        _root: [{
-          account: [{
-            [`cards(${JSON.stringify({ ...filters, $order: "-lastUpdatedAt", $limit: params.limit, $offset: params.offset })})`]: [
-              "id",
-              "accountSeq",
-              "title",
-              "content",
-              "derivedStatus",
-              "effort",
-              "priority",
-              { assignee: ["id", "name"] },
-              { deck: ["id", "name"] },
-              { milestone: ["id", "name"] },
-              "createdAt",
-              "lastUpdatedAt"
-            ]
-          }]
-        }]
+        _root: [
+          {
+            account: accountSelection
+          }
+        ]
       };
 
       const response = await client.query(query);
-      const cards = response._root?.[0]?.account?.cards || [];
+      const account = denormalizeRootRelation(schema, response as Record<string, any>, \"account\", accountSelection);
+      const cards = account?.cards || [];
 
       // Calculate pagination metadata
       const meta = {
@@ -200,25 +224,30 @@ Error Handling:
     try {
       const client = getClient();
 
-      const query = {
-        [`card(${JSON.stringify(params.card_id)})`]: [
-          "id",
-          "accountSeq",
-          "title",
-          "content",
-          "derivedStatus",
-          "effort",
-          "priority",
-          { assignee: ["id", "name", "email"] },
-          { deck: ["id", "name"] },
-          { milestone: ["id", "name", "dueDate"] },
-          "createdAt",
-          "lastUpdatedAt"
-        ]
-      };
+      const cardSelection: Selection[] = [
+        \"id\",
+        \"accountSeq\",
+        \"title\",
+        \"content\",
+        \"derivedStatus\",
+        \"effort\",
+        \"priority\",
+        { assignee: [\"id\", \"name\"] },
+        { deck: [\"id\", \"name\"] },
+        { milestone: [\"id\", \"name\", \"dueDate\"] },
+        \"createdAt\",
+        \"lastUpdatedAt\"
+      ];
 
+      const query = buildIdQuery(schema, \"card\", params.card_id, cardSelection);
       const response = await client.query(query);
-      const card = response.card;
+      const card = denormalizeById(
+        schema,
+        response as Record<string, any>,
+        \"card\",
+        params.card_id,
+        cardSelection
+      );
 
       if (!card) {
         return {
@@ -348,27 +377,106 @@ Examples:
         filters.projectId = params.project_id;
       }
 
+      const deckSelection: Selection[] = [
+        \"id\",
+        \"name\",
+        \"type\",
+        { project: [\"id\", \"name\"] }
+      ];
+
+      const decksKey = buildRelationKey(
+        \"decks\",
+        Object.keys(filters).length > 0 ? filters : undefined
+      );
+
+      const accountSelection: Selection[] = [{ [decksKey]: deckSelection }];
+      validateSelection(schema, \"account\", accountSelection);
+
       const query = {
-        _root: [{
-          account: [{
-            [`decks${Object.keys(filters).length > 0 ? `(${JSON.stringify(filters)})` : ""}`]: [
-              "id",
-              "name",
-              "type",
-              { project: ["id", "name"] }
-            ]
-          }]
-        }]
+        _root: [
+          {
+            account: accountSelection
+          }
+        ]
       };
 
       const response = await client.query(query);
-      const decks = response._root?.[0]?.account?.decks || [];
+      const account = denormalizeRootRelation(schema, response as Record<string, any>, \"account\", accountSelection);
+      const decks = account?.decks || [];
 
       const formatted = format.formatDeckList(decks, params.response_format);
 
       return {
         content: [{ type: "text", text: formatted }],
         structuredContent: params.response_format === ResponseFormat.JSON ? { decks } : undefined
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_get_deck
+// ============================================================================
+server.registerTool(
+  "codecks_get_deck",
+  {
+    title: "Get Codecks Deck",
+    description: `Retrieve detailed information about a specific deck.
+
+Fetches deck metadata including name, type, description, project, and archival state.
+
+Args:
+  - deck_id (string): The deck ID to retrieve
+  - response_format ('markdown' | 'json'): Output format (default: 'markdown')
+
+Returns:
+  Complete deck details including fields and relationships.`,
+    inputSchema: schemas.GetDeckSchema,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.GetDeckInput) => {
+    try {
+      const client = getClient();
+
+      const deckSelection: Selection[] = [
+        "id",
+        "name",
+        "type",
+        "description",
+        "isArchived",
+        { project: ["id", "name"] }
+      ];
+
+      const query = buildIdQuery(schema, "deck", params.deck_id, deckSelection);
+      const response = await client.query(query);
+      const deck = denormalizeById(
+        schema,
+        response as Record<string, any>,
+        "deck",
+        params.deck_id,
+        deckSelection
+      );
+
+      if (!deck) {
+        return {
+          content: [{ type: "text", text: `Error: Deck with ID '${params.deck_id}' not found.` }]
+        };
+      }
+
+      const formatted = format.formatDeck(deck, params.response_format);
+
+      return {
+        content: [{ type: "text", text: formatted }],
+        structuredContent: params.response_format === ResponseFormat.JSON ? deck : undefined
       };
     } catch (error) {
       return {
@@ -407,16 +515,21 @@ Returns:
     try {
       const client = getClient();
 
+      const projectSelection: Selection[] = [\"id\", \"name\", \"isArchived\"];
+      const accountSelection: Selection[] = [{ anyProjects: projectSelection }];
+      validateSelection(schema, \"account\", accountSelection);
+
       const query = {
-        _root: [{
-          account: [{
-            anyProjects: ["id", "name", "isArchived"]
-          }]
-        }]
+        _root: [
+          {
+            account: accountSelection
+          }
+        ]
       };
 
       const response = await client.query(query);
-      let projects = response._root?.[0]?.account?.anyProjects || [];
+      const account = denormalizeRootRelation(schema, response as Record<string, any>, \"account\", accountSelection);
+      let projects = account?.anyProjects || [];
 
       if (!params.include_archived) {
         projects = projects.filter((p: any) => !p.isArchived);
@@ -464,22 +577,97 @@ Returns:
     try {
       const client = getClient();
 
+      const milestoneSelection: Selection[] = [\"id\", \"name\", \"dueDate\", \"description\"];
+      const accountSelection: Selection[] = [{ milestones: milestoneSelection }];
+      validateSelection(schema, \"account\", accountSelection);
+
       const query = {
-        _root: [{
-          account: [{
-            milestones: ["id", "name", "dueDate", "description"]
-          }]
-        }]
+        _root: [
+          {
+            account: accountSelection
+          }
+        ]
       };
 
       const response = await client.query(query);
-      const milestones = response._root?.[0]?.account?.milestones || [];
+      const account = denormalizeRootRelation(schema, response as Record<string, any>, \"account\", accountSelection);
+      const milestones = account?.milestones || [];
 
       const formatted = format.formatMilestoneList(milestones, params.response_format);
 
       return {
         content: [{ type: "text", text: formatted }],
         structuredContent: params.response_format === ResponseFormat.JSON ? { milestones } : undefined
+      };
+    } catch (error) {
+      return {
+        content: [{ type: "text", text: formatError(error) }]
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_get_milestone
+// ============================================================================
+server.registerTool(
+  "codecks_get_milestone",
+  {
+    title: "Get Codecks Milestone",
+    description: `Retrieve detailed information about a specific milestone.
+
+Fetches milestone metadata including name, due date, description, project, and archival state.
+
+Args:
+  - milestone_id (string): The milestone ID to retrieve
+  - response_format ('markdown' | 'json'): Output format (default: 'markdown')
+
+Returns:
+  Complete milestone details including fields and relationships.`,
+    inputSchema: schemas.GetMilestoneSchema,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.GetMilestoneInput) => {
+    try {
+      const client = getClient();
+
+      const milestoneSelection: Selection[] = [
+        "id",
+        "name",
+        "dueDate",
+        "description",
+        "isArchived",
+        { project: ["id", "name"] }
+      ];
+
+      const query = buildIdQuery(schema, "milestone", params.milestone_id, milestoneSelection);
+      const response = await client.query(query);
+      const milestone = denormalizeById(
+        schema,
+        response as Record<string, any>,
+        "milestone",
+        params.milestone_id,
+        milestoneSelection
+      );
+
+      if (!milestone) {
+        return {
+          content: [
+            { type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }
+          ]
+        };
+      }
+
+      const formatted = format.formatMilestone(milestone, params.response_format);
+
+      return {
+        content: [{ type: "text", text: formatted }],
+        structuredContent: params.response_format === ResponseFormat.JSON ? milestone : undefined
       };
     } catch (error) {
       return {
@@ -498,13 +686,13 @@ server.registerTool(
     title: "Get Current Codecks User",
     description: `Get information about the currently authenticated user.
 
-Retrieves your user profile including ID, name, and email. Useful for getting your user_id for creating cards.
+Uses Codecks' read API to fetch the logged-in user (id, name) and (when available) their primary email via the userEmail model.
 
 Args:
   - response_format ('markdown' | 'json'): Output format (default: 'markdown')
 
 Returns:
-  Current user information including ID, name, and email.`,
+  User information including id, name, and (if available) email.`,
     inputSchema: schemas.GetCurrentUserSchema,
     annotations: {
       readOnlyHint: true,
@@ -517,28 +705,54 @@ Returns:
     try {
       const client = getClient();
 
-      const query = {
-        _root: [{
-          loggedInUser: ["id", "name", "email"]
-        }]
-      };
+      const userSelection: Selection[] = [
+        \"id\",
+        \"name\",
+        { primaryEmail: [\"id\", \"email\", \"isPrimary\", \"isVerified\", \"userId\"] }
+      ];
 
+      const query = buildRootQuery(schema, \"loggedInUser\", userSelection);
       const response = await client.query(query);
-      const user = response._root?.[0]?.loggedInUser;
+      const user = denormalizeRootRelation(
+        schema,
+        response as Record<string, any>,
+        \"loggedInUser\",
+        userSelection
+      );
 
       if (!user) {
         return {
-          content: [{ type: "text", text: "Error: Unable to retrieve current user information." }]
+          content: [{
+            type: "text",
+            text: "Error: Unable to retrieve current user information from Codecks. Please verify your token and subdomain, then retry."
+          }]
         };
       }
+      const emailObj = user.primaryEmail || null;
+
+      const output = {
+        id: user.id,
+        name: user.name,
+        ...(emailObj?.email ? { email: emailObj.email } : {}),
+        ...(emailObj ? {
+          email_is_primary: emailObj.isPrimary,
+          email_is_verified: emailObj.isVerified
+        } : {})
+      };
 
       const formatted = params.response_format === ResponseFormat.JSON
-        ? JSON.stringify(user, null, 2)
-        : `# Current User\n\n**ID**: ${user.id}\n**Name**: ${user.name}\n**Email**: ${user.email}`;
+        ? JSON.stringify(output, null, 2)
+        : [
+            "# Current User",
+            "",
+            `**ID**: ${output.id}`,
+            `**Name**: ${output.name}`,
+            ...(output.email ? [`**Email**: ${output.email}`] : ["**Email**: (not available)"])
+          ].join("\n");
 
       return {
         content: [{ type: "text", text: formatted }],
-        structuredContent: params.response_format === ResponseFormat.JSON ? user : undefined
+        structuredContent: params.response_format === ResponseFormat.JSON ? output : undefined
       };
     } catch (error) {
       return {

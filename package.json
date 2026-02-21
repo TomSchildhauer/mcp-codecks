@@ -7,8 +7,12 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "clean": "rm -rf dist"
+    "build": "tsc && mkdir -p dist/schemas && cp src/schemas/codecks-api-schema.json dist/schemas/codecks-api-schema.json",
+    "clean": "rm -rf dist",
+    "generate:schema": "node scripts/generate-api-schema.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "engines": {
     "node": ">=18"
@@ -23,6 +27,9 @@
     "@types/node": "^22.10.0",
     "@types/express": "^5.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.4",
+    "@vitest/coverage-v8": "^2.1.4",
+    "axios-mock-adapter": "^1.22.0"
   }
 }

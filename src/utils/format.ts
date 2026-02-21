@@ -57,6 +57,31 @@ export function formatCard(card: any, format: ResponseFormat): string {
 }
 
 /**
+ * Format a single milestone for display
+ */
+export function formatMilestone(milestone: any, format: ResponseFormat): string {
+  if (format === ResponseFormat.JSON) {
+    return JSON.stringify(milestone, null, 2);
+  }
+
+  const lines = [
+    `# ${milestone.name || "(Untitled Milestone)"}`,
+    "",
+    `**ID**: ${milestone.id}`
+  ];
+
+  if (milestone.dueDate) {
+    lines.push(`**Due Date**: ${milestone.dueDate}`);
+  }
+
+  if (milestone.description) {
+    lines.push("", "## Description", "", milestone.description);
+  }
+
+  return lines.join("\\n");
+}
+
+/**
  * Format multiple cards for listing
  */
 export function formatCardList(cards: any[], format: ResponseFormat, meta?: any): string {
