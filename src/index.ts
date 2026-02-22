@@ -852,7 +852,8 @@ Returns:
     try {
       const client = getClient();
 
-      const milestoneSelection: Selection[] = ["id", "name", "dueDate", "description"];
+      // Note: 'dueDate' causes 500 error, cannot be requested
+      const milestoneSelection: Selection[] = ["id", "name", "description"];
       const accountSelection: Selection[] = [{ milestones: milestoneSelection }];
       const query = buildRootQuery(schema, "account", accountSelection);
 
@@ -903,13 +904,11 @@ Returns:
     try {
       const client = getClient();
 
+      // Note: 'dueDate' and 'isArchived' cause 500 errors
       const milestoneSelection: Selection[] = [
         "id",
         "name",
-        "dueDate",
-        "description",
-        "isArchived",
-        { project: ["id", "name"] }
+        "description"
       ];
 
       const query = buildIdQuery(schema, "milestone", params.milestone_id, milestoneSelection);

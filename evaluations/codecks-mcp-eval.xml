@@ -10,7 +10,7 @@
   <qa_pair>
     <question>What is the ID and name of the currently authenticated user in the Codecks account?</question>
     <answer_type>json</answer_type>
-    <answer>{"tool": "codecks_get_current_user", "contains": ["id", "name"]}</answer>
+    <answer>{"tool": "codecks_get_current_user", "params": {"response_format": "json"}, "contains": ["d0a9dab4-09bd-11f1-880d-9b5c4bf464e3", "orkenstein"]}</answer>
     <notes>Tests basic user authentication and identity retrieval</notes>
   </qa_pair>
   

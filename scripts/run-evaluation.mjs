@@ -116,21 +116,33 @@ async function runQuestion(qa, index) {
         log(`   Result: ${JSON.stringify(result).slice(0, 200)}...`, 'gray');
       }
       
-      // Simple validation
+      // Check if response contains an error
+      const textContent = result?.result?.content?.[0]?.text || '';
+      if (textContent.includes('Error:')) {
+        log('   ✗ FAIL - Tool returned error', 'red');
+        return { pass: false, question, error: textContent.slice(0, 100) };
+      }
+      
+      // Validate expected fields if specified
       if (meta.contains) {
-        const hasAll = meta.contains.every(field => 
-          JSON.stringify(result).includes(field)
-        );
+        // Look in structured content first, then text content
+        const dataToCheck = result?.result?.structuredContent || textContent;
+        const dataStr = typeof dataToCheck === 'string' ? dataToCheck : JSON.stringify(dataToCheck);
+        
+        const hasAll = meta.contains.every(field => dataStr.includes(field));
         if (hasAll) {
           log('   ✓ PASS', 'green');
           return { pass: true, question, result };
         } else {
           log('   ✗ FAIL - Missing expected fields', 'red');
+          if (VERBOSE) {
+            log(`   Expected: ${meta.contains.join(', ')}`, 'gray');
+          }
           return { pass: false, question, error: 'Missing fields' };
         }
       }
       
-      log('   ✓ PASS (no validation)', 'green');
+      log('   ✓ PASS', 'green');
       return { pass: true, question, result };
       
     } else if (meta.tools) {
