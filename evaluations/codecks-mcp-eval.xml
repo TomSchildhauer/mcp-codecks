@@ -76,4 +76,18 @@
     <answer>{"tool": "codecks_list_cards", "params": {"limit": 100, "offset": 0}}</answer>
     <notes>Tests card counting with pagination awareness</notes>
   </qa_pair>
+
+  <qa_pair>
+    <question>Check for any sprints in the account. Does the query succeed even if no sprints are found?</question>
+    <answer_type>boolean</answer_type>
+    <answer>{"tool": "codecks_list_sprints", "params": {"response_format": "json"}}</answer>
+    <notes>Tests the auto-generated 'codecks_list_sprints' tool. It should pass even if no sprints exist.</notes>
+  </qa_pair>
+
+  <qa_pair>
+    <question>What was the most recent activity type in the account?</question>
+    <answer_type>string</answer_type>
+    <answer>{"tool": "codecks_list_activities", "params": {"limit": 1, "order_by": "createdAt", "order_desc": true, "response_format": "json"}}</answer>
+    <notes>Tests the auto-generated 'codecks_list_activities' tool, including ordering and pagination.</notes>
+  </qa_pair>
 </evaluation>
