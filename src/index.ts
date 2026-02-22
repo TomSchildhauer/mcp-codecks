@@ -142,7 +142,7 @@ Error Handling:
       const client = getClient();
       
       // Build query filters
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
       if (params.deck_id) filters.deckId = params.deck_id;
       if (params.milestone_id) filters.milestoneId = params.milestone_id;
       if (params.assignee_id) filters.assigneeId = params.assignee_id;
@@ -400,7 +400,7 @@ Returns:
     try {
       const client = getClient();
 
-      const data: Record<string, any> = {
+      const data: Record<string, unknown> = {
         sessionId: params.session_id || undefined,
         ids: params.ids
       };
@@ -460,7 +460,7 @@ Examples:
     try {
       const client = getClient();
 
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
       if (params.project_id) {
         filters.projectId = params.project_id;
       }
