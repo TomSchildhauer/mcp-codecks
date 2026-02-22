@@ -56,7 +56,7 @@ export interface CodecksUser {
 }
 
 export interface QueryFilter {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PaginationMeta {

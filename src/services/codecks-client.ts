@@ -76,7 +76,7 @@ export class CodecksClient {
   /**
    * Execute a GraphQL-like query against the Codecks API with automatic retry on 429
    */
-  async query<T = any>(query: Record<string, any>): Promise<T> {
+  async query<T = Record<string, unknown>>(query: Record<string, unknown>): Promise<T> {
     return this.executeWithRetry(async () => {
       const response = await axios.post(
         API_BASE_URL,
@@ -98,9 +98,9 @@ export class CodecksClient {
   /**
    * Execute a dispatch (mutation) operation with automatic retry on 429
    */
-  async dispatch<T = any>(
+  async dispatch<T = Record<string, unknown>>(
     endpoint: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<T> {
     return this.executeWithRetry(async () => {
       const response = await axios.post(
