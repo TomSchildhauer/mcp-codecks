@@ -97,7 +97,7 @@ export function formatCardList(cards: any[], format: ResponseFormat, meta?: any)
   const lines = ["# Cards", ""];
 
   if (meta) {
-    lines.push(`Total: ${meta.total || cards.length} | Showing: ${cards.length}`);
+  lines.push(`Showing: ${cards.length} results`);
     if (meta.has_more) {
       lines.push(`*More results available - use offset ${meta.next_offset} to continue*`);
     }

@@ -28,14 +28,14 @@ const AutoListSchema = z.object({
   offset: z.number().int().min(0).default(0),
   order_by: z.string().optional().describe("Field to order by"),
   order_desc: z.boolean().default(true).describe("Whether to order descending"),
-  filters: z.record(z.any()).optional().describe("Filter object for the query"),
-  selection: z.array(z.any()).optional().describe("Selection array (fields/relations)"),
+  filters: z.record(z.unknown()).optional().describe("Filter object for the query"),
+  selection: z.array(z.unknown()).optional().describe("Selection array (fields/relations)"),
   response_format: ResponseFormatSchema
 }).strict();
 
 const AutoGetSchema = z.object({
   id: z.string().describe("Model ID"),
-  selection: z.array(z.any()).optional().describe("Selection array (fields/relations)"),
+  selection: z.array(z.unknown()).optional().describe("Selection array (fields/relations)"),
   response_format: ResponseFormatSchema
 }).strict();
 
@@ -252,11 +252,19 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
     }
 
     if (!existingToolNames.has(getTool)) {
+      const model = schema.models[modelName];
+      const fields = Object.keys(model.fields || {});
+      const relations = Object.keys(model.relations || {});
+      const availableFields = [...fields.slice(0, 8), ...(fields.length > 8 ? ["..."] : [])];
+      const fieldsDesc = availableFields.length > 0 ? `\n\nAvailable fields: ${availableFields.join(", ")}` : "";
+      const relationsDesc = relations.length > 0 ? `\nRelations: ${relations.slice(0, 5).join(", ")}${relations.length > 5 ? ", ..." : ""}` : "";
+      const exampleSelection = fields.slice(0, 3).length > 0 ? `\n\nExample selection: [${fields.slice(0, 3).map(f => `"${f}"`).join(", ")}]` : "";
+      
       server.registerTool(
         getTool,
         {
           title: `Get ${modelName}`,
-          description: `Auto-generated get tool for ${modelName}.`,
+          description: `Get a single ${modelName} by ID with optional field selection.${fieldsDesc}${relationsDesc}${exampleSelection}`,
           inputSchema: AutoGetSchema,
           annotations: {
             readOnlyHint: true,

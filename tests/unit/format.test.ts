@@ -110,7 +110,7 @@ describe("format utilities", () => {
   it("formats card list with zero total and missing title", () => {
     const cards = [{ accountSeq: 1, derivedStatus: "done" }];
     const output = formatCardList(cards, ResponseFormat.MARKDOWN, { total: 0 });
-    expect(output).toContain("Total: 1 | Showing: 1");
+    expect(output).toContain("Showing: 1 results");
     expect(output).toContain("(Untitled)");
   });
 

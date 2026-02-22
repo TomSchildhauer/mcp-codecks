@@ -60,7 +60,6 @@ export interface QueryFilter {
 }
 
 export interface PaginationMeta {
-  total: number;
   count: number;
   offset: number;
   has_more: boolean;
