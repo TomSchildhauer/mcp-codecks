@@ -34,39 +34,44 @@ const server = new McpServer({
 });
 
 const schema = loadSchema();
+
+// Tool name constants - prevents sync issues between manualTools Set and registrations
+const TOOL_LIST_CARDS = "codecks_list_cards";
+const TOOL_GET_CARD = "codecks_get_card";
+const TOOL_CREATE_CARD = "codecks_create_card";
+const TOOL_BULK_UPDATE_CARDS = "codecks_bulk_update_cards";
+const TOOL_LIST_DECKS = "codecks_list_decks";
+const TOOL_GET_DECK = "codecks_get_deck";
+const TOOL_CREATE_DECK = "codecks_create_deck";
+const TOOL_ADD_DECKS_TO_SPACE = "codecks_add_decks_to_space_after";
+const TOOL_LIST_PROJECTS = "codecks_list_projects";
+const TOOL_CREATE_PROJECT = "codecks_create_project";
+const TOOL_SET_PROJECT_VISIBILITY = "codecks_set_project_visibility";
+const TOOL_LIST_MILESTONES = "codecks_list_milestones";
+const TOOL_GET_MILESTONE = "codecks_get_milestone";
+const TOOL_GET_CURRENT_USER = "codecks_get_current_user";
+
 const manualTools = new Set<string>([
-  "codecks_list_cards",
-  "codecks_get_card",
-  "codecks_create_card",
-  "codecks_bulk_update_cards",
-  "codecks_list_decks",
-  "codecks_get_deck",
-  "codecks_create_deck",
-  "codecks_add_decks_to_space_after",
-  "codecks_list_projects",
-  "codecks_create_project",
-  "codecks_set_project_visibility",
-  "codecks_list_milestones",
-  "codecks_get_milestone",
-  "codecks_get_current_user"
+  TOOL_LIST_CARDS,
+  TOOL_GET_CARD,
+  TOOL_CREATE_CARD,
+  TOOL_BULK_UPDATE_CARDS,
+  TOOL_LIST_DECKS,
+  TOOL_GET_DECK,
+  TOOL_CREATE_DECK,
+  TOOL_ADD_DECKS_TO_SPACE,
+  TOOL_LIST_PROJECTS,
+  TOOL_CREATE_PROJECT,
+  TOOL_SET_PROJECT_VISIBILITY,
+  TOOL_LIST_MILESTONES,
+  TOOL_GET_MILESTONE,
+  TOOL_GET_CURRENT_USER
 ]);
 
-// Initialize Codecks client
+// Codecks client - initialized eagerly at startup after env validation
 let client: CodecksClient;
 
 function getClient(): CodecksClient {
-  if (!client) {
-    const authToken = process.env.CODECKS_AUTH_TOKEN;
-    const subdomain = process.env.CODECKS_ACCOUNT_SUBDOMAIN;
-
-    if (!authToken || !subdomain) {
-      throw new Error(
-        "Missing required environment variables: CODECKS_AUTH_TOKEN and CODECKS_ACCOUNT_SUBDOMAIN"
-      );
-    }
-
-    client = new CodecksClient(authToken, subdomain);
-  }
   return client;
 }
 
@@ -74,7 +79,7 @@ function getClient(): CodecksClient {
 // TOOL: codecks_list_cards
 // ============================================================================
 server.registerTool(
-  "codecks_list_cards",
+  TOOL_LIST_CARDS,
   {
     title: "List Codecks Cards",
     description: `List cards from your Codecks account with optional filters.
@@ -210,7 +215,7 @@ Error Handling:
 // TOOL: codecks_get_card
 // ============================================================================
 server.registerTool(
-  "codecks_get_card",
+  TOOL_GET_CARD,
   {
     title: "Get Codecks Card",
     description: `Retrieve detailed information about a specific card.
@@ -288,7 +293,7 @@ Error Handling:
 // TOOL: codecks_create_card
 // ============================================================================
 server.registerTool(
-  "codecks_create_card",
+  TOOL_CREATE_CARD,
   {
     title: "Create Codecks Card",
     description: `Create a new card in Codecks.
@@ -368,7 +373,7 @@ Error Handling:
 // TOOL: codecks_bulk_update_cards
 // ============================================================================
 server.registerTool(
-  "codecks_bulk_update_cards",
+  TOOL_BULK_UPDATE_CARDS,
   {
     title: "Bulk Update Codecks Cards",
     description: `Update multiple cards at once (status change and/or move to deck).
@@ -424,7 +429,7 @@ Returns:
 // TOOL: codecks_list_decks
 // ============================================================================
 server.registerTool(
-  "codecks_list_decks",
+  TOOL_LIST_DECKS,
   {
     title: "List Codecks Decks",
     description: `List all decks in your Codecks account.
@@ -503,7 +508,7 @@ Examples:
 // TOOL: codecks_get_deck
 // ============================================================================
 server.registerTool(
-  "codecks_get_deck",
+  TOOL_GET_DECK,
   {
     title: "Get Codecks Deck",
     description: `Retrieve detailed information about a specific deck.
@@ -571,7 +576,7 @@ Returns:
 // TOOL: codecks_create_deck
 // ============================================================================
 server.registerTool(
-  "codecks_create_deck",
+  TOOL_CREATE_DECK,
   {
     title: "Create Codecks Deck",
     description: `Create a new deck in Codecks.
@@ -625,7 +630,7 @@ Returns:
 // TOOL: codecks_add_decks_to_space_after
 // ============================================================================
 server.registerTool(
-  "codecks_add_decks_to_space_after",
+  TOOL_ADD_DECKS_TO_SPACE,
   {
     title: "Reorder Decks in a Space",
     description: `Move decks to a position after a target deck inside a space.
@@ -677,7 +682,7 @@ Returns:
 // TOOL: codecks_list_projects
 // ============================================================================
 server.registerTool(
-  "codecks_list_projects",
+  TOOL_LIST_PROJECTS,
   {
     title: "List Codecks Projects",
     description: `List all projects in your Codecks account.
@@ -703,7 +708,9 @@ Returns:
       const client = getClient();
 
       const projectSelection: Selection[] = ["id", "name", "isArchived"];
-      const accountSelection: Selection[] = [{ anyProjects: projectSelection }];
+      // Use server-side filtering: 'projects' excludes archived, 'anyProjects' includes all
+      const projectRelation = params.include_archived ? "anyProjects" : "projects";
+      const accountSelection: Selection[] = [{ [projectRelation]: projectSelection }];
       validateSelection(schema, "account", accountSelection);
 
       const query = {
@@ -716,11 +723,7 @@ Returns:
 
       const response = await client.query(query);
       const account = denormalizeRootRelation(schema, response as Record<string, any>, "account", accountSelection);
-      let projects = account?.anyProjects || [];
-
-      if (!params.include_archived) {
-        projects = projects.filter((p: any) => !p.isArchived);
-      }
+      const projects = account?.[projectRelation] || [];
 
       const formatted = format.formatProjectList(projects, params.response_format);
 
@@ -740,7 +743,7 @@ Returns:
 // TOOL: codecks_create_project
 // ============================================================================
 server.registerTool(
-  "codecks_create_project",
+  TOOL_CREATE_PROJECT,
   {
     title: "Create Codecks Project",
     description: `Create a new project in Codecks.
@@ -792,7 +795,7 @@ Returns:
 // TOOL: codecks_set_project_visibility
 // ============================================================================
 server.registerTool(
-  "codecks_set_project_visibility",
+  TOOL_SET_PROJECT_VISIBILITY,
   {
     title: "Set Codecks Project Visibility",
     description: `Update a project's visibility (including deletion).
@@ -840,7 +843,7 @@ Returns:
 // TOOL: codecks_list_milestones
 // ============================================================================
 server.registerTool(
-  "codecks_list_milestones",
+  TOOL_LIST_MILESTONES,
   {
     title: "List Codecks Milestones",
     description: `List all milestones in your Codecks account.
@@ -898,7 +901,7 @@ Returns:
 // TOOL: codecks_get_milestone
 // ============================================================================
 server.registerTool(
-  "codecks_get_milestone",
+  TOOL_GET_MILESTONE,
   {
     title: "Get Codecks Milestone",
     description: `Retrieve detailed information about a specific milestone.
@@ -968,7 +971,7 @@ Returns:
 // TOOL: codecks_get_current_user
 // ============================================================================
 server.registerTool(
-  "codecks_get_current_user",
+  TOOL_GET_CURRENT_USER,
   {
     title: "Get Current Codecks User",
     description: `Get information about the currently authenticated user.
@@ -1065,7 +1068,7 @@ registerAutoTools({
 // Transport Setup
 // ============================================================================
 
-function validateEnvironment(): void {
+function validateEnvironment(): { authToken: string; subdomain: string } {
   const authToken = process.env.CODECKS_AUTH_TOKEN;
   const subdomain = process.env.CODECKS_ACCOUNT_SUBDOMAIN;
 
@@ -1075,17 +1078,22 @@ function validateEnvironment(): void {
     console.error("  - CODECKS_ACCOUNT_SUBDOMAIN: Your organization subdomain");
     process.exit(1);
   }
+
+  return { authToken, subdomain };
 }
 
 async function runStdio() {
-  validateEnvironment();
+  const { authToken, subdomain } = validateEnvironment();
+  client = new CodecksClient(authToken, subdomain);
+  
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Codecks MCP server running via stdio");
 }
 
 async function runHTTP() {
-  validateEnvironment();
+  const { authToken, subdomain } = validateEnvironment();
+  client = new CodecksClient(authToken, subdomain);
 
   const httpSecret = process.env.MCP_HTTP_SECRET;
   if (!httpSecret) {
