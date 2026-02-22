@@ -124,20 +124,26 @@ export class CodecksClient {
    * Execute a request with exponential backoff retry for 429 rate limits
    */
   private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: Error | undefined;
+    
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         return await fn();
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 429) {
-          if (attempt < this.maxRetries) {
-            const delay = this.retryDelay * Math.pow(2, attempt);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            continue;
-          }
+        lastError = handleError(error);
+        
+        if (axios.isAxiosError(error) && error.response?.status === 429 && attempt < this.maxRetries) {
+          const delay = this.retryDelay * Math.pow(2, attempt);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
         }
-        throw handleError(error);
+        
+        throw lastError;
       }
     }
+    
+    // Unreachable: loop always exits via return or throw
+    throw lastError || new Error("Unexpected: retry loop completed without result");
   }
 
 }
