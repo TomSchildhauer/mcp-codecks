@@ -177,15 +177,7 @@ Error Handling:
       });
 
       const accountSelection: Selection[] = [{ [cardsKey]: cardSelection }];
-      validateSelection(schema, "account", accountSelection);
-
-      const query = {
-        _root: [
-          {
-            account: accountSelection
-          }
-        ]
-      };
+      const query = buildRootQuery(schema, "account", accountSelection);
 
       const response = await client.query(query);
       const account = denormalizeRootRelation(schema, response as Record<string, any>, "account", accountSelection);
@@ -481,15 +473,7 @@ Examples:
       );
 
       const accountSelection: Selection[] = [{ [decksKey]: deckSelection }];
-      validateSelection(schema, "account", accountSelection);
-
-      const query = {
-        _root: [
-          {
-            account: accountSelection
-          }
-        ]
-      };
+      const query = buildRootQuery(schema, "account", accountSelection);
 
       const response = await client.query(query);
       const account = denormalizeRootRelation(schema, response as Record<string, any>, "account", accountSelection);
@@ -870,15 +854,7 @@ Returns:
 
       const milestoneSelection: Selection[] = ["id", "name", "dueDate", "description"];
       const accountSelection: Selection[] = [{ milestones: milestoneSelection }];
-      validateSelection(schema, "account", accountSelection);
-
-      const query = {
-        _root: [
-          {
-            account: accountSelection
-          }
-        ]
-      };
+      const query = buildRootQuery(schema, "account", accountSelection);
 
       const response = await client.query(query);
       const account = denormalizeRootRelation(schema, response as Record<string, any>, "account", accountSelection);
