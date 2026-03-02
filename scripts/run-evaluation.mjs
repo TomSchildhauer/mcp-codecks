@@ -13,6 +13,7 @@ import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import { parseString } from 'xml2js';
 import { promisify } from 'util';
+import { classifyToolFailure, extractSearchablePayload } from './evaluation-result-utils.mjs';
 
 const parseXML = promisify(parseString);
 
@@ -116,18 +117,20 @@ async function runQuestion(qa, index) {
         log(`   Result: ${JSON.stringify(result).slice(0, 200)}...`, 'gray');
       }
       
-      // Check if response contains an error
-      const textContent = result?.result?.content?.[0]?.text || '';
-      if (textContent.includes('Error:')) {
+      // Hard failure checks
+      const failure = classifyToolFailure(result);
+      if (failure.failed) {
         log('   ✗ FAIL - Tool returned error', 'red');
-        return { pass: false, question, error: textContent.slice(0, 100) };
+        return { pass: false, question, error: failure.reason };
       }
       
       // Validate expected fields if specified
       if (meta.contains) {
-        // Look in structured content first, then text content
-        const dataToCheck = result?.result?.structuredContent || textContent;
-        const dataStr = typeof dataToCheck === 'string' ? dataToCheck : JSON.stringify(dataToCheck);
+        const dataStr = extractSearchablePayload(result);
+        if (!dataStr) {
+          log('   ✗ FAIL - Missing usable payload for contains check', 'red');
+          return { pass: false, question, error: 'Missing payload' };
+        }
         
         const hasAll = meta.contains.every(field => dataStr.includes(field));
         if (hasAll) {

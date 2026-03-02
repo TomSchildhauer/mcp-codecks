@@ -345,9 +345,8 @@ describe("auto tools", () => {
     expect(lastQuery._root[0][key]).toEqual(["child"]);
   });
 
-  it("handles missing models by returning empty selection and no order field", async () => {
+  it("handles missing models by returning no relation-path error", async () => {
     const server = createServer();
-    let lastQuery: any = null;
     const mutableSchema: any = {
       models: {
         _root: { type: "root", fields: {}, relations: { ghosts: { type: "ghost", cardinality: "many" } } },
@@ -355,10 +354,7 @@ describe("auto tools", () => {
       }
     };
     const getClient = () => ({
-      query: async (query: any) => {
-        lastQuery = query;
-        return { _root: [{ ghosts: [] }] };
-      }
+      query: async () => ({ _root: [{ ghosts: [] }] })
     });
     registerAutoTools({
       server: server as any,
@@ -368,10 +364,8 @@ describe("auto tools", () => {
     });
 
     delete mutableSchema.models.ghost;
-    await server.tools["codecks_list_ghost"].handler({ response_format: ResponseFormat.JSON });
-    const key = Object.keys(lastQuery._root[0])[0];
-    expect(key).toBe("ghosts");
-    expect(lastQuery._root[0][key]).toEqual([]);
+    const result = await server.tools["codecks_list_ghost"].handler({ response_format: ResponseFormat.JSON });
+    expect(result.content[0].text).toContain("Unknown model 'ghost' in schema");
   });
 
   it("renders markdown output for list and get tools", async () => {
@@ -505,5 +499,129 @@ describe("auto tools", () => {
       response_format: ResponseFormat.MARKDOWN
     });
     expect(result.content[0].text).toContain("No root or account relation");
+  });
+
+  it("resolves nested account paths for overridden models", async () => {
+    const server = createServer();
+    const response = {
+      _root: [{ account: "a1" }],
+      account: { a1: { projects: ["p1"] } },
+      project: { p1: { id: "p1", publicProjectInfo: "ppi1", milestoneProjects: ["mp1"] } },
+      publicProjectInfo: { ppi1: { id: "ppi1", cardCount: "7" } },
+      milestoneProject: { mp1: { id: "mp1" } }
+    };
+    const getClient = () => ({
+      query: async (query: any) => {
+        const firstKey = Object.keys(query)[0] || "";
+        if (firstKey.startsWith("publicProjectInfo(")) {
+          throw new Error("id lookup unsupported");
+        }
+        return response;
+      }
+    });
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: {}, relations: { projects: { type: "project", cardinality: "many" } } },
+          project: {
+            type: "model",
+            fields: { id: "string" },
+            relations: {
+              publicProjectInfo: { type: "publicProjectInfo", cardinality: "one" },
+              milestoneProjects: { type: "milestoneProject", cardinality: "many" }
+            }
+          },
+          publicProjectInfo: { type: "model", fields: { id: "string", cardCount: "string" }, relations: {} },
+          milestoneProject: { type: "model", fields: { id: "string" }, relations: {} }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => `ERR:${(e as Error).message}`
+    });
+
+    const listPpi = await server.tools["codecks_list_public_project_info"].handler({
+      response_format: ResponseFormat.JSON
+    });
+    expect(listPpi.structuredContent.items[0].id).toBe("ppi1");
+
+    const getPpi = await server.tools["codecks_get_public_project_info"].handler({
+      id: "ppi1",
+      response_format: ResponseFormat.JSON
+    });
+    expect(getPpi.structuredContent.id).toBe("ppi1");
+
+    const listMp = await server.tools["codecks_list_milestone_project"].handler({
+      response_format: ResponseFormat.JSON
+    });
+    expect(listMp.structuredContent.items[0].id).toBe("mp1");
+  });
+
+  it("registers activity compatibility aliases", async () => {
+    const server = createServer();
+    const getClient = () => ({
+      query: async () => ({
+        _root: [{ account: "a1" }],
+        account: { a1: { activities: ["ac1"] } },
+        activity: { ac1: { id: "ac1", type: "statusChanged", createdAt: "2026-01-01" } }
+      })
+    });
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: {}, relations: { activities: { type: "activity", cardinality: "many" } } },
+          activity: { type: "model", fields: { id: "string", type: "string", createdAt: "date" }, relations: {} }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    expect(server.tools["codecks_list_activities"]).toBeTruthy();
+    expect(server.tools["codecks_get_activities"]).toBeTruthy();
+
+    const listAlias = await server.tools["codecks_list_activities"].handler({
+      response_format: ResponseFormat.JSON
+    });
+    expect(listAlias.structuredContent.items[0].id).toBe("ac1");
+
+    const getAlias = await server.tools["codecks_get_activities"].handler({
+      id: "ac1",
+      response_format: ResponseFormat.JSON
+    });
+    expect(getAlias.structuredContent.id).toBe("ac1");
+  });
+
+  it("registers sprint compatibility aliases", async () => {
+    const server = createServer();
+    const getClient = () => ({
+      query: async () => ({
+        _root: [{ account: "a1" }],
+        account: { a1: { sprints: ["sp1"] } },
+        sprint: { sp1: { id: "sp1", name: "Sprint 1" } }
+      })
+    });
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: {}, relations: { sprints: { type: "sprint", cardinality: "many" } } },
+          sprint: { type: "model", fields: { id: "string", name: "string" }, relations: {} }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    expect(server.tools["codecks_list_sprints"]).toBeTruthy();
+
+    const listAlias = await server.tools["codecks_list_sprints"].handler({
+      response_format: ResponseFormat.JSON
+    });
+    expect(listAlias.structuredContent.items[0].id).toBe("sp1");
   });
 });

@@ -455,30 +455,31 @@ Examples:
     try {
       const client = getClient();
 
-      const filters: Record<string, unknown> = {};
-      if (params.project_id) {
-        filters.projectId = params.project_id;
-      }
-
-      // Note: 'id' is automatically included in response, cannot be requested
-      // Fields 'name' and 'type' cause 500 errors - not available in API
+      // Codecks API does not support server-side projectId filtering on decks,
+      // so we always fetch all decks with the project relation and filter locally.
       const deckSelection: Selection[] = [
+        "title",
+        "deckType",
         "accountSeq",
         "description",
-        "createdAt"
+        "createdAt",
+        { project: ["id", "name"] }
       ];
 
-      const decksKey = buildRelationKey(
-        "decks",
-        Object.keys(filters).length > 0 ? filters : undefined
-      );
-
-      const accountSelection: Selection[] = [{ [decksKey]: deckSelection }];
+      const accountSelection: Selection[] = [{ decks: deckSelection }];
       const query = buildRootQuery(schema, "account", accountSelection);
 
       const response = await client.query(query);
       const account = denormalizeRootRelation(schema, response as Record<string, any>, "account", accountSelection);
-      const decks = account?.decks || [];
+      let decks = account?.decks || [];
+
+      // Client-side project filter
+      if (params.project_id) {
+        decks = decks.filter((d: any) => {
+          const pid = typeof d.project === "object" ? d.project?.id : d.project;
+          return pid === params.project_id;
+        });
+      }
 
       const formatted = format.formatDeckList(decks, params.response_format);
 
@@ -523,15 +524,18 @@ Returns:
     try {
       const client = getClient();
 
-      // Note: 'id' is automatically included in response, cannot be requested
       const deckSelection: Selection[] = [
+        "id",
+        "title",
+        "deckType",
         "accountSeq",
         "description",
         "createdAt",
-        "coverFile"
+        { project: ["id", "name"] }
       ];
 
-      const query = buildIdQuery(schema, "deck", params.deck_id, deckSelection);
+      // Codecks expects deck ID lookup as a single-item array; plain string ID can 500.
+      const query = buildIdQuery(schema, "deck", [params.deck_id], deckSelection);
       const response = await client.query(query);
       const deck = denormalizeById(
         schema,
@@ -852,8 +856,8 @@ Returns:
     try {
       const client = getClient();
 
-      // Note: 'dueDate' causes 500 error, cannot be requested
-      const milestoneSelection: Selection[] = ["id", "name", "description"];
+      // Codecks uses `date` rather than `dueDate`.
+      const milestoneSelection: Selection[] = ["id", "name", "description", "date", "startDate"];
       const accountSelection: Selection[] = [{ milestones: milestoneSelection }];
       const query = buildRootQuery(schema, "account", accountSelection);
 
@@ -904,14 +908,17 @@ Returns:
     try {
       const client = getClient();
 
-      // Note: 'dueDate' and 'isArchived' cause 500 errors
       const milestoneSelection: Selection[] = [
         "id",
         "name",
-        "description"
+        "description",
+        "date",
+        "startDate",
+        "createdAt"
       ];
 
-      const query = buildIdQuery(schema, "milestone", params.milestone_id, milestoneSelection);
+      // Codecks expects milestone ID lookup as a single-item array; plain string ID can 500.
+      const query = buildIdQuery(schema, "milestone", [params.milestone_id], milestoneSelection);
       const response = await client.query(query);
       const milestone = denormalizeById(
         schema,

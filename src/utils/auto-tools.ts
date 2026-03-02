@@ -7,6 +7,7 @@ import { ResponseFormatSchema } from "../schemas/tool-schemas.js";
 import {
   buildIdQuery,
   buildRelationKey,
+  buildRootQuery,
   denormalizeById,
   denormalizeRootRelation,
   validateSelection,
@@ -21,6 +22,35 @@ type RegisterAutoToolsOptions = {
   formatError: (error: unknown) => string;
   skipModels?: Set<string>;
   existingToolNames?: Set<string>;
+};
+
+type AutoToolHandler = (params: any) => Promise<any>;
+type PathOrigin = "root" | "account";
+type RelationPath = {
+  origin: PathOrigin;
+  relations: string[];
+};
+
+const MODEL_PATH_OVERRIDES: Record<string, RelationPath[]> = {
+  publicProjectInfo: [
+    { origin: "account", relations: ["projects", "publicProjectInfo"] },
+    { origin: "account", relations: ["decks", "project", "publicProjectInfo"] }
+  ],
+  milestoneProject: [
+    { origin: "account", relations: ["milestones", "milestoneProjects"] },
+    { origin: "account", relations: ["projects", "milestoneProjects"] }
+  ]
+};
+
+const COMPATIBILITY_ALIASES: Record<string, { list: string[]; get: string[] }> = {
+  activity: {
+    list: ["codecks_list_activities"],
+    get: ["codecks_get_activities"]
+  },
+  sprint: {
+    list: ["codecks_list_sprints"],
+    get: ["codecks_get_sprints"]
+  }
 };
 
 const AutoListSchema = z.object({
@@ -119,6 +149,186 @@ function findAccountRelation(schema: CodecksApiSchema, modelName: string): strin
   return null;
 }
 
+function findNestedPath(
+  schema: CodecksApiSchema,
+  startModel: string,
+  targetModel: string,
+  maxDepth: number
+): string[] | null {
+  if (startModel === targetModel) {
+    return [];
+  }
+
+  const queue: Array<{ model: string; path: string[] }> = [{ model: startModel, path: [] }];
+  const seen = new Set<string>([`${startModel}:0`]);
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+    if (current.path.length >= maxDepth) {
+      continue;
+    }
+
+    const model = schema.models[current.model];
+    if (!model) {
+      continue;
+    }
+
+    for (const [relationName, relationInfo] of Object.entries(model.relations || {})) {
+      const nextPath = [...current.path, relationName];
+      if (relationInfo.type === targetModel) {
+        return nextPath;
+      }
+      const depthKey = `${relationInfo.type}:${nextPath.length}`;
+      if (!seen.has(depthKey)) {
+        seen.add(depthKey);
+        queue.push({ model: relationInfo.type, path: nextPath });
+      }
+    }
+  }
+
+  return null;
+}
+
+function dedupePaths(paths: RelationPath[]): RelationPath[] {
+  const seen = new Set<string>();
+  const unique: RelationPath[] = [];
+  for (const path of paths) {
+    const key = `${path.origin}:${path.relations.join(".")}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(path);
+    }
+  }
+  return unique;
+}
+
+function resolveRelationPaths(schema: CodecksApiSchema, modelName: string): RelationPath[] {
+  const candidates: RelationPath[] = [];
+
+  const overridePaths = MODEL_PATH_OVERRIDES[modelName];
+  if (overridePaths) {
+    candidates.push(...overridePaths);
+  }
+
+  const rootRelation = findRootRelation(schema, modelName);
+  if (rootRelation) {
+    candidates.push({ origin: "root", relations: [rootRelation] });
+  }
+
+  const accountRelation = findAccountRelation(schema, modelName);
+  if (accountRelation) {
+    candidates.push({ origin: "account", relations: [accountRelation] });
+  }
+
+  const accountNestedPath = findNestedPath(schema, "account", modelName, 4);
+  if (accountNestedPath && accountNestedPath.length > 0) {
+    candidates.push({ origin: "account", relations: accountNestedPath });
+  }
+
+  const root = schema.models._root;
+  if (root) {
+    for (const [rootRelName, rootRelInfo] of Object.entries(root.relations || {})) {
+      if (rootRelName === "account") {
+        continue;
+      }
+      const nested = findNestedPath(schema, rootRelInfo.type, modelName, 3);
+      if (nested && nested.length > 0) {
+        candidates.push({ origin: "root", relations: [rootRelName, ...nested] });
+      }
+    }
+  }
+
+  return dedupePaths(candidates).filter((path) => path.relations.length > 0);
+}
+
+function buildPathSelection(
+  relations: string[],
+  leafSelection: Selection[],
+  leafQuery?: Record<string, unknown>
+): Selection[] {
+  if (relations.length === 0) {
+    return leafSelection;
+  }
+
+  const [head, ...rest] = relations;
+  if (rest.length === 0) {
+    const key = buildRelationKey(head, leafQuery);
+    return [{ [key]: leafSelection }];
+  }
+
+  return [{ [head]: buildPathSelection(rest, leafSelection, leafQuery) }];
+}
+
+function collectPathItems(value: unknown, relations: string[]): any[] {
+  if (value == null) {
+    return [];
+  }
+
+  if (relations.length === 0) {
+    return Array.isArray(value) ? value.filter(Boolean) : [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => collectPathItems(entry, relations));
+  }
+
+  const [relationName, ...rest] = relations;
+  return collectPathItems((value as Record<string, unknown>)[relationName], rest);
+}
+
+function buildAccountQuery(schema: CodecksApiSchema, accountSelection: Selection[]): Record<string, unknown> {
+  if (schema.models._root?.relations?.account) {
+    return buildRootQuery(schema, "account", accountSelection);
+  }
+  return {
+    _root: [
+      {
+        account: accountSelection
+      }
+    ]
+  };
+}
+
+async function queryItemsByPath(args: {
+  client: CodecksClient;
+  schema: CodecksApiSchema;
+  path: RelationPath;
+  selection: Selection[];
+  leafQuery?: Record<string, unknown>;
+}): Promise<any[]> {
+  const { client, schema, path, selection, leafQuery } = args;
+
+  if (path.origin === "account") {
+    const accountSelection = buildPathSelection(path.relations, selection, leafQuery);
+    validateSelection(schema, "account", accountSelection);
+    const query = buildAccountQuery(schema, accountSelection);
+    const response = await client.query(query);
+    const account = denormalizeRootRelation(schema, response, "account", accountSelection);
+    return collectPathItems(account, path.relations);
+  }
+
+  const [rootRelation, ...rest] = path.relations;
+  if (!rootRelation) {
+    return [];
+  }
+
+  if (rest.length === 0) {
+    const query = buildRootQuery(schema, rootRelation, selection, leafQuery);
+    const response = await client.query(query);
+    const rootValue = denormalizeRootRelation(schema, response, rootRelation, selection);
+    return collectPathItems(rootValue, []);
+  }
+
+  const rootSelection = buildPathSelection(rest, selection, leafQuery);
+  const query = buildRootQuery(schema, rootRelation, rootSelection);
+  const response = await client.query(query);
+  const rootValue = denormalizeRootRelation(schema, response, rootRelation, rootSelection);
+  return collectPathItems(rootValue, rest);
+}
+
 function formatGeneric(modelName: string, data: any, format: ResponseFormat): string {
   if (format === ResponseFormat.JSON) {
     return JSON.stringify(data, null, 2);
@@ -154,6 +364,8 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
     const snake = toSnake(modelName);
     const listTool = `codecks_list_${snake}`;
     const getTool = `codecks_get_${snake}`;
+    let listHandler: AutoToolHandler | null = null;
+    let getHandler: AutoToolHandler | null = null;
 
     if (!existingToolNames.has(listTool)) {
       const model = schema.models[modelName];
@@ -164,7 +376,78 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
       const relationsDesc = relations.length > 0 ? `\nRelations: ${relations.slice(0, 5).join(", ")}${relations.length > 5 ? ", ..." : ""}` : "";
       const exampleField = fields[1] || "fieldName";
       const filterExample = fields.includes("id") ? `\n\nExample filters: {"${exampleField}": "value"}` : "";
-      
+
+      listHandler = async (params: any) => {
+        try {
+          const client = getClient();
+          const selection = parseSelection(
+            params.selection,
+            getDefaultSelection(schema, modelName)
+          );
+          const orderField = params.order_by || chooseOrderField(schema, modelName);
+          const filters = { ...(params.filters || {}) } as Record<string, unknown>;
+          if (orderField) {
+            filters.$order = params.order_desc ? `-${orderField}` : orderField;
+            filters.$limit = params.limit;
+            filters.$offset = params.offset;
+          }
+          const relationPaths = resolveRelationPaths(schema, modelName);
+          if (relationPaths.length === 0) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Error: No root or account relation found for model '${modelName}'.`
+                }
+              ]
+            };
+          }
+
+          let firstSuccessfulItems: any[] | null = null;
+          let firstError: unknown;
+          const leafQuery = Object.keys(filters).length > 0 ? filters : undefined;
+
+          for (const path of relationPaths) {
+            try {
+              const items = await queryItemsByPath({
+                client,
+                schema,
+                path,
+                selection,
+                leafQuery
+              });
+              if (firstSuccessfulItems === null) {
+                firstSuccessfulItems = items;
+              }
+              if (items.length > 0) {
+                firstSuccessfulItems = items;
+                break;
+              }
+            } catch (error) {
+              if (!firstError) {
+                firstError = error;
+              }
+            }
+          }
+
+          if (firstSuccessfulItems === null) {
+            return {
+              content: [{ type: "text", text: formatError(firstError) }]
+            };
+          }
+
+          const formatted = formatGenericList(modelName, firstSuccessfulItems, params.response_format);
+          return {
+            content: [{ type: "text", text: formatted }],
+            structuredContent: params.response_format === ResponseFormat.JSON ? { items: firstSuccessfulItems } : undefined
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: formatError(error) }]
+          };
+        }
+      };
+
       server.registerTool(
         listTool,
         {
@@ -178,75 +461,7 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
             openWorldHint: true
           }
         },
-        async (params: any) => {
-          try {
-            const client = getClient();
-            const selection = parseSelection(
-              params.selection,
-              getDefaultSelection(schema, modelName)
-            );
-            const orderField = params.order_by || chooseOrderField(schema, modelName);
-            const filters = { ...(params.filters || {}) };
-            if (orderField) {
-              filters.$order = params.order_desc ? `-${orderField}` : orderField;
-              filters.$limit = params.limit;
-              filters.$offset = params.offset;
-            }
-
-            const rootRelation = findRootRelation(schema, modelName);
-            if (rootRelation) {
-              const query = {
-                _root: [
-                  {
-                    [buildRelationKey(rootRelation, filters)]: selection
-                  }
-                ]
-              };
-              const response = await client.query(query);
-              const items = denormalizeRootRelation(schema, response, rootRelation, selection) || [];
-              const formatted = formatGenericList(modelName, items, params.response_format);
-              return {
-                content: [{ type: "text", text: formatted }],
-                structuredContent: params.response_format === ResponseFormat.JSON ? { items } : undefined
-              };
-            }
-
-            const accountRelation = findAccountRelation(schema, modelName);
-            if (accountRelation) {
-              const relationKey = buildRelationKey(accountRelation, filters);
-              const accountSelection: Selection[] = [{ [relationKey]: selection }];
-              validateSelection(schema, "account", accountSelection);
-              const query = {
-                _root: [
-                  {
-                    account: accountSelection
-                  }
-                ]
-              };
-              const response = await client.query(query);
-              const account = denormalizeRootRelation(schema, response, "account", accountSelection);
-              const items = account?.[accountRelation] || [];
-              const formatted = formatGenericList(modelName, items, params.response_format);
-              return {
-                content: [{ type: "text", text: formatted }],
-                structuredContent: params.response_format === ResponseFormat.JSON ? { items } : undefined
-              };
-            }
-
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: No root or account relation found for model '${modelName}'.`
-                }
-              ]
-            };
-          } catch (error) {
-            return {
-              content: [{ type: "text", text: formatError(error) }]
-            };
-          }
-        }
+        listHandler
       );
       existingToolNames.add(listTool);
     }
@@ -258,8 +473,81 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
       const availableFields = [...fields.slice(0, 8), ...(fields.length > 8 ? ["..."] : [])];
       const fieldsDesc = availableFields.length > 0 ? `\n\nAvailable fields: ${availableFields.join(", ")}` : "";
       const relationsDesc = relations.length > 0 ? `\nRelations: ${relations.slice(0, 5).join(", ")}${relations.length > 5 ? ", ..." : ""}` : "";
-      const exampleSelection = fields.slice(0, 3).length > 0 ? `\n\nExample selection: [${fields.slice(0, 3).map(f => `"${f}"`).join(", ")}]` : "";
-      
+      const exampleSelection = fields.slice(0, 3).length > 0 ? `\n\nExample selection: [${fields.slice(0, 3).map((f) => `"${f}"`).join(", ")}]` : "";
+
+      getHandler = async (params: any) => {
+        try {
+          const client = getClient();
+          const selection = parseSelection(
+            params.selection,
+            getDefaultSelection(schema, modelName)
+          );
+          const relationPaths = resolveRelationPaths(schema, modelName);
+
+          let firstError: unknown;
+          let hadSuccessfulLookup = false;
+          const idVariants: Array<string | string[]> = [params.id, [params.id]];
+
+          for (const idVariant of idVariants) {
+            try {
+              const query = buildIdQuery(schema, modelName, idVariant, selection);
+              const response = await client.query(query);
+              hadSuccessfulLookup = true;
+              const item = denormalizeById(schema, response, modelName, params.id, selection);
+              if (item) {
+                const formatted = formatGeneric(modelName, item, params.response_format);
+                return {
+                  content: [{ type: "text", text: formatted }],
+                  structuredContent: params.response_format === ResponseFormat.JSON ? item : undefined
+                };
+              }
+            } catch (error) {
+              if (!firstError) {
+                firstError = error;
+              }
+            }
+          }
+
+          for (const path of relationPaths) {
+            try {
+              const items = await queryItemsByPath({
+                client,
+                schema,
+                path,
+                selection
+              });
+              hadSuccessfulLookup = true;
+              const item = items.find((entry) => entry?.id === params.id);
+              if (item) {
+                const formatted = formatGeneric(modelName, item, params.response_format);
+                return {
+                  content: [{ type: "text", text: formatted }],
+                  structuredContent: params.response_format === ResponseFormat.JSON ? item : undefined
+                };
+              }
+            } catch (error) {
+              if (!firstError) {
+                firstError = error;
+              }
+            }
+          }
+
+          if (!hadSuccessfulLookup && firstError) {
+            return {
+              content: [{ type: "text", text: formatError(firstError) }]
+            };
+          }
+
+          return {
+            content: [{ type: "text", text: `Error: ${modelName} '${params.id}' not found.` }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: formatError(error) }]
+          };
+        }
+      };
+
       server.registerTool(
         getTool,
         {
@@ -273,34 +561,60 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
             openWorldHint: true
           }
         },
-        async (params: any) => {
-          try {
-            const client = getClient();
-            const selection = parseSelection(
-              params.selection,
-              getDefaultSelection(schema, modelName)
-            );
-            const query = buildIdQuery(schema, modelName, params.id, selection);
-            const response = await client.query(query);
-            const item = denormalizeById(schema, response, modelName, params.id, selection);
-            if (!item) {
-              return {
-                content: [{ type: "text", text: `Error: ${modelName} '${params.id}' not found.` }]
-              };
-            }
-            const formatted = formatGeneric(modelName, item, params.response_format);
-            return {
-              content: [{ type: "text", text: formatted }],
-              structuredContent: params.response_format === ResponseFormat.JSON ? item : undefined
-            };
-          } catch (error) {
-            return {
-              content: [{ type: "text", text: formatError(error) }]
-            };
-          }
-        }
+        getHandler
       );
       existingToolNames.add(getTool);
+    }
+
+    const aliases = COMPATIBILITY_ALIASES[modelName];
+    if (aliases) {
+      if (listHandler) {
+        for (const listAlias of aliases.list) {
+          if (existingToolNames.has(listAlias)) {
+            continue;
+          }
+          server.registerTool(
+            listAlias,
+            {
+              title: `List ${toSnake(modelName)} (alias)`,
+              description: `Compatibility alias for ${listTool}.`,
+              inputSchema: AutoListSchema,
+              annotations: {
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true
+              }
+            },
+            listHandler
+          );
+          existingToolNames.add(listAlias);
+        }
+      }
+
+      if (getHandler) {
+        for (const getAlias of aliases.get) {
+          if (existingToolNames.has(getAlias)) {
+            continue;
+          }
+          server.registerTool(
+            getAlias,
+            {
+              title: `Get ${toSnake(modelName)} (alias)`,
+              description: `Compatibility alias for ${getTool}.`,
+              inputSchema: AutoGetSchema,
+              annotations: {
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true
+              }
+            },
+            getHandler
+          );
+          existingToolNames.add(getAlias);
+        }
+      }
     }
   }
 }

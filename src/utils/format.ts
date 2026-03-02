@@ -70,8 +70,8 @@ export function formatMilestone(milestone: any, format: ResponseFormat): string 
     `**ID**: ${milestone.id}`
   ];
 
-  if (milestone.dueDate) {
-    lines.push(`**Due Date**: ${milestone.dueDate}`);
+  if (milestone.date || milestone.dueDate) {
+    lines.push(`**Due Date**: ${milestone.date || milestone.dueDate}`);
   }
 
   if (milestone.description) {
@@ -131,14 +131,14 @@ export function formatDeck(deck: any, format: ResponseFormat): string {
   }
 
   const lines = [
-    `# ${deck.name}`,
+    `# ${deck.title || deck.name || "(Untitled Deck)"}`,
     "",
     `**ID**: ${deck.id}`,
-    `**Type**: ${deck.type}`,
+    `**Type**: ${deck.deckType || deck.type || "unknown"}`,
   ];
 
   if (deck.project) {
-    lines.push(`**Project**: ${deck.project.name}`);
+    lines.push(`**Project**: ${deck.project.name || deck.project.id || deck.project}`);
   }
 
   if (deck.cardCount !== undefined) {
@@ -163,11 +163,11 @@ export function formatDeckList(decks: any[], format: ResponseFormat): string {
   const lines = ["# Decks", ""];
 
   for (const deck of decks) {
-    lines.push(`## ${deck.name}`);
+    lines.push(`## ${deck.title || deck.name || "(Untitled Deck)"}`);
     lines.push(`- **ID**: ${deck.id}`);
-    lines.push(`- **Type**: ${deck.type}`);
+    lines.push(`- **Type**: ${deck.deckType || deck.type || "unknown"}`);
     if (deck.project) {
-      lines.push(`- **Project**: ${deck.project.name}`);
+      lines.push(`- **Project**: ${deck.project.name || deck.project.id || deck.project}`);
     }
     lines.push("");
   }
@@ -208,8 +208,8 @@ export function formatMilestoneList(milestones: any[], format: ResponseFormat): 
   for (const milestone of milestones) {
     lines.push(`## ${milestone.name}`);
     lines.push(`- **ID**: ${milestone.id}`);
-    if (milestone.dueDate) {
-      lines.push(`- **Due Date**: ${milestone.dueDate}`);
+    if (milestone.date || milestone.dueDate) {
+      lines.push(`- **Due Date**: ${milestone.date || milestone.dueDate}`);
     }
     if (milestone.description) {
       lines.push(`- **Description**: ${milestone.description}`);
