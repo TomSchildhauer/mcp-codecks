@@ -603,6 +603,66 @@ describe("auto tools", () => {
     expect(result.structuredContent.isAvailable).toBe(false);
   });
 
+  it("sanitizes unsafe publicProjectInfo selection fields", async () => {
+    const server = createServer();
+    const getClient = () => ({
+      query: async (query: any) => {
+        const serialized = JSON.stringify(query);
+        if (serialized.includes("activities7d") || serialized.includes("visits7d")) {
+          throw new Error("unsafe field leaked");
+        }
+
+        const firstKey = Object.keys(query)[0] || "";
+        if (firstKey.startsWith("project(")) {
+          return {
+            project: { p1: { id: "p1", name: "Project", publicProjectInfo: "ppi1" } },
+            publicProjectInfo: { ppi1: { cardCount: "12" } }
+          };
+        }
+        return {
+          _root: [{ account: "a1" }],
+          account: { a1: { projects: ["p1"] } },
+          project: { p1: { id: "p1", publicProjectInfo: "ppi1" } },
+          publicProjectInfo: { ppi1: { cardCount: "12" } }
+        };
+      }
+    });
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: {}, relations: { projects: { type: "project", cardinality: "many" } } },
+          project: {
+            type: "model",
+            fields: { id: "string", name: "string" },
+            relations: { publicProjectInfo: { type: "publicProjectInfo", cardinality: "one" } }
+          },
+          publicProjectInfo: {
+            type: "model",
+            fields: { cardCount: "string", cardDoneStreak: "string", lastActivityAt: "string", activities7d: "string", visits7d: "string" },
+            relations: {}
+          }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    const listResult = await server.tools["codecks_list_public_project_info"].handler({
+      selection: ["activities7d", "visits7d", "cardCount"],
+      response_format: ResponseFormat.JSON
+    });
+    expect(listResult.structuredContent.items[0].cardCount).toBe("12");
+
+    const getResult = await server.tools["codecks_get_public_project_info"].handler({
+      id: "p1",
+      selection: ["activities7d", "cardCount"],
+      response_format: ResponseFormat.JSON
+    });
+    expect(getResult.structuredContent.cardCount).toBe("12");
+  });
+
   it("registers activity compatibility aliases", async () => {
     const server = createServer();
     const getClient = () => ({

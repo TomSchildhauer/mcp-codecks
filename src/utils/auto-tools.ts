@@ -46,6 +46,9 @@ const MODEL_SELECTION_OVERRIDES: Record<string, Selection[]> = {
   // activities7d and visits7d currently trigger upstream 500s; keep safe subset by default.
   publicProjectInfo: ["cardCount", "cardDoneStreak", "lastActivityAt"]
 };
+const MODEL_SELECTION_ALLOWLIST: Record<string, Set<string>> = {
+  publicProjectInfo: new Set(["cardCount", "cardDoneStreak", "lastActivityAt"])
+};
 const COMPATIBILITY_ALIASES: Record<string, { list: string[]; get: string[] }> = {
   activity: {
     list: ["codecks_list_activities"],
@@ -119,6 +122,22 @@ function parseSelection(input: unknown, fallback: Selection[]): Selection[] {
     }
   }
   return Array.isArray(input) ? (input as Selection[]) : fallback;
+}
+
+function sanitizeSelectionForModel(modelName: string, selection: Selection[]): Selection[] {
+  const allowlist = MODEL_SELECTION_ALLOWLIST[modelName];
+  if (!allowlist) {
+    return selection;
+  }
+
+  const sanitized = selection.filter(
+    (item): item is string => typeof item === "string" && allowlist.has(item)
+  );
+  if (sanitized.length > 0) {
+    return sanitized;
+  }
+
+  return (MODEL_SELECTION_OVERRIDES[modelName] ?? []) as Selection[];
 }
 
 function chooseOrderField(schema: CodecksApiSchema, modelName: string): string | undefined {
@@ -388,10 +407,11 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
       listHandler = async (params: any) => {
         try {
           const client = getClient();
-          const selection = parseSelection(
+          const rawSelection = parseSelection(
             params.selection,
             getDefaultSelection(schema, modelName)
           );
+          const selection = sanitizeSelectionForModel(modelName, rawSelection);
           const orderField = params.order_by || chooseOrderField(schema, modelName);
           const filters = { ...(params.filters || {}) } as Record<string, unknown>;
           if (orderField) {
@@ -486,10 +506,11 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
       getHandler = async (params: any) => {
         try {
           const client = getClient();
-          const selection = parseSelection(
+          const rawSelection = parseSelection(
             params.selection,
             getDefaultSelection(schema, modelName)
           );
+          const selection = sanitizeSelectionForModel(modelName, rawSelection);
           const relationPaths = resolveRelationPaths(schema, modelName);
 
           if (modelName === "publicProjectInfo") {
