@@ -558,6 +558,51 @@ describe("auto tools", () => {
     expect(listMp.structuredContent.items[0].id).toBe("mp1");
   });
 
+  it("supports get_public_project_info with project id fallback", async () => {
+    const server = createServer();
+    const getClient = () => ({
+      query: async (query: any) => {
+        const firstKey = Object.keys(query)[0] || "";
+        if (firstKey.startsWith("project(")) {
+          return {
+            project: {
+              p1: { id: "p1", name: "Project", isPublic: false, visibility: "default", publicProjectInfo: null }
+            }
+          };
+        }
+        throw new Error("unexpected query");
+      }
+    });
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: {}, relations: { projects: { type: "project", cardinality: "many" } } },
+          project: {
+            type: "model",
+            fields: { id: "string", name: "string", isPublic: "bool", visibility: "string" },
+            relations: { publicProjectInfo: { type: "publicProjectInfo", cardinality: "one" } }
+          },
+          publicProjectInfo: {
+            type: "model",
+            fields: { cardCount: "string", cardDoneStreak: "string", lastActivityAt: "string" },
+            relations: {}
+          }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    const result = await server.tools["codecks_get_public_project_info"].handler({
+      id: "p1",
+      response_format: ResponseFormat.JSON
+    });
+    expect(result.structuredContent.projectId).toBe("p1");
+    expect(result.structuredContent.isAvailable).toBe(false);
+  });
+
   it("registers activity compatibility aliases", async () => {
     const server = createServer();
     const getClient = () => ({

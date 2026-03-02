@@ -42,6 +42,10 @@ const MODEL_PATH_OVERRIDES: Record<string, RelationPath[]> = {
   ]
 };
 
+const MODEL_SELECTION_OVERRIDES: Record<string, Selection[]> = {
+  // activities7d and visits7d currently trigger upstream 500s; keep safe subset by default.
+  publicProjectInfo: ["cardCount", "cardDoneStreak", "lastActivityAt"]
+};
 const COMPATIBILITY_ALIASES: Record<string, { list: string[]; get: string[] }> = {
   activity: {
     list: ["codecks_list_activities"],
@@ -78,6 +82,10 @@ function toSnake(value: string): string {
 }
 
 function getDefaultSelection(schema: CodecksApiSchema, modelName: string): Selection[] {
+  const selectionOverride = MODEL_SELECTION_OVERRIDES[modelName];
+  if (selectionOverride) {
+    return selectionOverride;
+  }
   const model = schema.models[modelName];
   if (!model) {
     return [];
@@ -483,6 +491,55 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
             getDefaultSelection(schema, modelName)
           );
           const relationPaths = resolveRelationPaths(schema, modelName);
+
+          if (modelName === "publicProjectInfo") {
+            try {
+              const safeSelection = selection.length > 0 ? selection : getDefaultSelection(schema, modelName);
+              const projectQuery = buildIdQuery(schema, "project", [params.id], [
+                "id",
+                "name",
+                "visibility",
+                "isPublic",
+                { publicProjectInfo: safeSelection }
+              ]);
+              const projectResponse = await client.query(projectQuery);
+              const project = denormalizeById(schema, projectResponse, "project", params.id, [
+                "id",
+                "name",
+                "visibility",
+                "isPublic",
+                { publicProjectInfo: safeSelection }
+              ]);
+
+              if (project) {
+                if (project.publicProjectInfo) {
+                  const item = {
+                    ...project.publicProjectInfo,
+                    projectId: project.id
+                  };
+                  const formatted = formatGeneric(modelName, item, params.response_format);
+                  return {
+                    content: [{ type: "text", text: formatted }],
+                    structuredContent: params.response_format === ResponseFormat.JSON ? item : undefined
+                  };
+                }
+
+                const unavailable = {
+                  id: params.id,
+                  projectId: project.id,
+                  isAvailable: false,
+                  reason: "publicProjectInfo is only populated for public projects."
+                };
+                const formatted = formatGeneric(modelName, unavailable, params.response_format);
+                return {
+                  content: [{ type: "text", text: formatted }],
+                  structuredContent: params.response_format === ResponseFormat.JSON ? unavailable : undefined
+                };
+              }
+            } catch {
+              // Fall through to generic get logic
+            }
+          }
 
           let firstError: unknown;
           let hadSuccessfulLookup = false;
