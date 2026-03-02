@@ -312,4 +312,55 @@ describe("query builder", () => {
     const result = denormalizeRootRelation(minimalSchema, response, "things", ["id", "name"]);
     expect(result[0].name).toBe("One");
   });
+
+  it("denormalizeRootRelation resolves queried root relation keys", () => {
+    const minimalSchema = {
+      models: {
+        _root: { relations: { account: { type: "account", cardinality: "one" } } },
+        account: { fields: { id: "string", name: "string" }, relations: {} }
+      }
+    } as any;
+    const queriedKey = "account({\"$order\":\"-createdAt\",\"$limit\":1,\"$offset\":0})";
+    const response = {
+      _root: { [queriedKey]: "a1" },
+      account: { a1: { id: "a1", name: "Main Account" } }
+    };
+
+    const account = denormalizeRootRelation(minimalSchema, response, "account", ["id", "name"]);
+    expect(account.id).toBe("a1");
+    expect(account.name).toBe("Main Account");
+  });
+
+  it("denormalizeRootRelation resolves queried nested relation keys", () => {
+    const minimalSchema = {
+      models: {
+        _root: { relations: { account: { type: "account", cardinality: "one" } } },
+        account: {
+          fields: { id: "string" },
+          relations: { activities: { type: "activity", cardinality: "many" } }
+        },
+        activity: { fields: { id: "string", type: "string" }, relations: {} }
+      }
+    } as any;
+    const queriedActivitiesKey = "activities({\"$order\":\"-createdAt\",\"$limit\":2,\"$offset\":0})";
+    const response = {
+      _root: { account: "a1" },
+      account: {
+        a1: {
+          id: "a1",
+          [queriedActivitiesKey]: ["ac1", "ac2"]
+        }
+      },
+      activity: {
+        ac1: { id: "ac1", type: "created" },
+        ac2: { id: "ac2", type: "statusChanged" }
+      }
+    };
+
+    const selection: Selection[] = [{ [queriedActivitiesKey]: ["id", "type"] }];
+    const account = denormalizeRootRelation(minimalSchema, response, "account", selection);
+    expect(account.activities).toHaveLength(2);
+    expect(account.activities[0].id).toBe("ac1");
+    expect(account.activities[1].id).toBe("ac2");
+  });
 });

@@ -5,14 +5,21 @@ import {
   CreateCardSchema,
   CreateDeckSchema,
   CreateProjectSchema,
+  ListCardsSchema,
   SetProjectVisibilitySchema
 } from "../../src/schemas/tool-schemas.js";
 
 describe("tool schemas", () => {
   it("validates bulk update cards inputs", () => {
     expect(() => BulkUpdateCardsSchema.parse({ ids: ["a"], status: "done" })).not.toThrow();
+    expect(() => BulkUpdateCardsSchema.parse({ ids: ["a"], status: "hero" })).not.toThrow();
     expect(() => BulkUpdateCardsSchema.parse({ ids: ["a"], deck_id: "deck1" })).not.toThrow();
     expect(() => BulkUpdateCardsSchema.parse({ ids: ["a"] })).toThrow();
+  });
+
+  it("accepts API-driven card status values for list filters", () => {
+    expect(() => ListCardsSchema.parse({ status: "hero", response_format: "json" })).not.toThrow();
+    expect(() => ListCardsSchema.parse({ status: "archivedDone", response_format: "json" })).not.toThrow();
   });
 
   it("validates create deck inputs", () => {

@@ -224,6 +224,51 @@ maybeDescribe("codecks integration (read)", () => {
       expect(listedDeckId).toBe(deckId);
     }
   });
+
+  it("keeps account and activity list tools consistent with get_account", async () => {
+    if (!existsSync("dist/index.js")) {
+      return;
+    }
+
+    const listAccount = await callMcpTool("codecks_list_account", {
+      limit: 20,
+      offset: 0,
+      response_format: "json"
+    });
+
+    expect(listAccount?.result?.isError).not.toBe(true);
+    const listedAccounts = listAccount?.result?.structuredContent?.items || [];
+    expect(Array.isArray(listedAccounts)).toBe(true);
+    expect(listedAccounts.length).toBeGreaterThan(0);
+
+    const accountId = listedAccounts[0]?.id;
+    if (!accountId) {
+      return;
+    }
+
+    const getAccount = await callMcpTool("codecks_get_account", {
+      id: accountId,
+      selection: [{ activities: ["type", "createdAt"] }],
+      response_format: "json"
+    });
+    expect(getAccount?.result?.isError).not.toBe(true);
+    const getAccountPayload = getAccount?.result?.structuredContent || {};
+    expect(getAccountPayload.id).toBe(accountId);
+
+    const listActivity = await callMcpTool("codecks_list_activity", {
+      limit: 20,
+      offset: 0,
+      response_format: "json"
+    });
+    expect(listActivity?.result?.isError).not.toBe(true);
+    const listedActivities = listActivity?.result?.structuredContent?.items || [];
+    expect(Array.isArray(listedActivities)).toBe(true);
+
+    const getAccountActivities = getAccountPayload.activities || [];
+    if (Array.isArray(getAccountActivities) && getAccountActivities.length > 0) {
+      expect(listedActivities.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 const maybeDescribeWrite =

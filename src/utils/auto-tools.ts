@@ -30,6 +30,7 @@ type RelationPath = {
   origin: PathOrigin;
   relations: string[];
 };
+type RelationCardinality = "one" | "many";
 
 const MODEL_PATH_OVERRIDES: Record<string, RelationPath[]> = {
   publicProjectInfo: [
@@ -289,6 +290,33 @@ function buildPathSelection(
   return [{ [head]: buildPathSelection(rest, leafSelection, leafQuery) }];
 }
 
+function getLeafRelationCardinality(
+  schema: CodecksApiSchema,
+  path: RelationPath
+): RelationCardinality | null {
+  let currentModelName = path.origin === "account" ? "account" : "_root";
+  let leafCardinality: RelationCardinality | null = null;
+
+  for (const relationName of path.relations) {
+    const model = schema.models[currentModelName];
+    const relation = model?.relations?.[relationName];
+    if (!relation) {
+      return null;
+    }
+    leafCardinality = relation.cardinality;
+    currentModelName = relation.type;
+  }
+
+  return leafCardinality;
+}
+
+function applyClientSidePagination(items: any[], limit: number, offset: number): any[] {
+  if (offset >= items.length) {
+    return [];
+  }
+  return items.slice(offset, offset + limit);
+}
+
 function collectPathItems(value: unknown, relations: string[]): any[] {
   if (value == null) {
     return [];
@@ -412,12 +440,15 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
             getDefaultSelection(schema, modelName)
           );
           const selection = sanitizeSelectionForModel(modelName, rawSelection);
+          const limit = typeof params.limit === "number" ? params.limit : DEFAULT_LIMIT;
+          const offset = typeof params.offset === "number" ? params.offset : 0;
+          const orderDesc = typeof params.order_desc === "boolean" ? params.order_desc : true;
           const orderField = params.order_by || chooseOrderField(schema, modelName);
           const filters = { ...(params.filters || {}) } as Record<string, unknown>;
           if (orderField) {
-            filters.$order = params.order_desc ? `-${orderField}` : orderField;
-            filters.$limit = params.limit;
-            filters.$offset = params.offset;
+            filters.$order = orderDesc ? `-${orderField}` : orderField;
+            filters.$limit = limit;
+            filters.$offset = offset;
           }
           const relationPaths = resolveRelationPaths(schema, modelName);
           if (relationPaths.length === 0) {
@@ -432,23 +463,36 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
           }
 
           let firstSuccessfulItems: any[] | null = null;
+          let usedServerPagination = false;
           let firstError: unknown;
           const leafQuery = Object.keys(filters).length > 0 ? filters : undefined;
 
           for (const path of relationPaths) {
             try {
+              const leafCardinality = getLeafRelationCardinality(schema, path);
+              const leafQueryForPath = leafCardinality === "many" ? leafQuery : undefined;
               const items = await queryItemsByPath({
                 client,
                 schema,
                 path,
                 selection,
-                leafQuery
+                leafQuery: leafQueryForPath
               });
               if (firstSuccessfulItems === null) {
                 firstSuccessfulItems = items;
+                usedServerPagination = Boolean(
+                  leafQueryForPath &&
+                  "$limit" in leafQueryForPath &&
+                  "$offset" in leafQueryForPath
+                );
               }
               if (items.length > 0) {
                 firstSuccessfulItems = items;
+                usedServerPagination = Boolean(
+                  leafQueryForPath &&
+                  "$limit" in leafQueryForPath &&
+                  "$offset" in leafQueryForPath
+                );
                 break;
               }
             } catch (error) {
@@ -463,11 +507,14 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
               content: [{ type: "text", text: formatError(firstError) }]
             };
           }
+          const itemsToReturn = usedServerPagination
+            ? firstSuccessfulItems
+            : applyClientSidePagination(firstSuccessfulItems, limit, offset);
 
-          const formatted = formatGenericList(modelName, firstSuccessfulItems, params.response_format);
+          const formatted = formatGenericList(modelName, itemsToReturn, params.response_format);
           return {
             content: [{ type: "text", text: formatted }],
-            structuredContent: params.response_format === ResponseFormat.JSON ? { items: firstSuccessfulItems } : undefined
+            structuredContent: params.response_format === ResponseFormat.JSON ? { items: itemsToReturn } : undefined
           };
         } catch (error) {
           return {

@@ -729,4 +729,116 @@ describe("auto tools", () => {
     });
     expect(listAlias.structuredContent.items[0].id).toBe("sp1");
   });
+
+  it("handles queried relation keys for activity and account list responses", async () => {
+    const server = createServer();
+    const seenQueries: any[] = [];
+    const getClient = () => ({
+      query: async (query: any) => {
+        seenQueries.push(query);
+        const root = query?._root?.[0] || {};
+        const accountSelection = root.account;
+
+        if (Array.isArray(accountSelection)) {
+          const relationObj = accountSelection.find((item: unknown) => typeof item === "object") as Record<string, any> | undefined;
+          const relationKey = relationObj ? Object.keys(relationObj)[0] : "";
+
+          if (relationKey.startsWith("activities(")) {
+            return {
+              _root: [{ account: "a1" }],
+              account: {
+                a1: {
+                  id: "a1",
+                  [relationKey]: ["ac1"]
+                }
+              },
+              activity: {
+                ac1: { id: "ac1", type: "statusChanged", createdAt: "2026-01-01" }
+              }
+            };
+          }
+
+          return {
+            _root: [{ "account({\"$order\":\"-createdAt\",\"$limit\":20,\"$offset\":0})": "a1" }],
+            account: {
+              a1: { id: "a1", name: "RGSTD", createdAt: "2026-01-01" }
+            }
+          };
+        }
+
+        return { _root: [{ account: "a1" }], account: { a1: { id: "a1", name: "RGSTD" } } };
+      }
+    });
+
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: {
+            type: "model",
+            fields: { id: "string", name: "string", createdAt: "date" },
+            relations: { activities: { type: "activity", cardinality: "many" } }
+          },
+          activity: { type: "model", fields: { id: "string", type: "string", createdAt: "date" }, relations: {} }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    const activities = await server.tools["codecks_list_activity"].handler({
+      limit: 20,
+      offset: 0,
+      response_format: ResponseFormat.JSON
+    });
+    expect(activities.structuredContent.items).toHaveLength(1);
+    expect(activities.structuredContent.items[0].id).toBe("ac1");
+
+    const accounts = await server.tools["codecks_list_account"].handler({
+      limit: 20,
+      offset: 0,
+      response_format: ResponseFormat.JSON
+    });
+    expect(accounts.structuredContent.items).toHaveLength(1);
+    expect(accounts.structuredContent.items[0].id).toBe("a1");
+    expect(accounts.structuredContent.items[0].name).toBe("RGSTD");
+
+    const accountListQuery = seenQueries.find((q) => Array.isArray(q?._root) && q._root[0]?.account);
+    expect(Object.keys(accountListQuery._root[0])[0]).toBe("account");
+  });
+
+  it("does not append query args for singleton root relations", async () => {
+    const server = createServer();
+    let lastQuery: any = null;
+    const getClient = () => ({
+      query: async (query: any) => {
+        lastQuery = query;
+        return {
+          _root: [{ account: "a1" }],
+          account: { a1: { id: "a1", name: "Main", createdAt: "2026-01-01" } }
+        };
+      }
+    });
+
+    registerAutoTools({
+      server: server as any,
+      schema: {
+        models: {
+          _root: { type: "root", fields: {}, relations: { account: { type: "account", cardinality: "one" } } },
+          account: { type: "model", fields: { id: "string", name: "string", createdAt: "date" }, relations: {} }
+        }
+      } as any,
+      getClient: getClient as any,
+      formatError: (e) => String(e)
+    });
+
+    await server.tools["codecks_list_account"].handler({
+      limit: 10,
+      offset: 0,
+      response_format: ResponseFormat.JSON
+    });
+
+    expect(Object.keys(lastQuery._root[0])[0]).toBe("account");
+  });
 });

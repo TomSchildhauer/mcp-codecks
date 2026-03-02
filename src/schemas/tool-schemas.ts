@@ -25,13 +25,16 @@ export const ResponseFormatSchema = z.nativeEnum(ResponseFormat)
   .default(ResponseFormat.MARKDOWN)
   .describe("Output format: 'markdown' for human-readable or 'json' for structured data");
 
+const CardStatusSchema = z.string().min(1)
+  .describe("Card status value (API-driven, e.g. unassigned, started, review, blocked, done, hero, archivedDone, doc)");
+
 // Card schemas
 export const ListCardsSchema = z.object({
   deck_id: z.string().optional().describe("Filter by specific deck ID"),
   milestone_id: z.string().optional().describe("Filter by specific milestone ID"),
   assignee_id: z.string().optional().describe("Filter by assigned user ID"),
-  status: z.enum(["unassigned", "assigned", "started", "review", "blocked", "done"]).optional()
-    .describe("Filter by workflow status"),
+  status: CardStatusSchema.optional()
+    .describe("Filter by status (API-derived; values vary by account/workflow)"),
   search: z.string().optional().describe("Search term to filter cards by title/content"),
   limit: z.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.number().int().min(0).default(0),
@@ -40,7 +43,7 @@ export const ListCardsSchema = z.object({
 
 export const BulkUpdateCardsSchema = z.object({
   ids: z.array(z.string()).min(1).describe("Card IDs to update"),
-  status: z.enum(["unassigned", "assigned", "started", "review", "blocked", "done"]).optional()
+  status: CardStatusSchema.optional()
     .describe("Updated workflow status"),
   deck_id: z.string().optional().describe("Move cards to the specified deck ID"),
   session_id: z.string().optional().describe("[DEPRECATED] Client session ID - not required for MCP usage")

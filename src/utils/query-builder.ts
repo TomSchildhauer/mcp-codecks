@@ -136,6 +136,31 @@ export function buildIdQuery(
     [`${modelName}(${JSON.stringify(id)})`]: normalized
   };
 }
+function getRelationValue(
+  entity: Record<string, any> | undefined,
+  relationName: string,
+  requestedKey?: string
+): unknown {
+  if (!entity) {
+    return undefined;
+  }
+
+  if (requestedKey && requestedKey in entity) {
+    return entity[requestedKey];
+  }
+
+  if (relationName in entity) {
+    return entity[relationName];
+  }
+
+  for (const [key, value] of Object.entries(entity)) {
+    if (parseRelationKey(key).name === relationName) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
 
 function resolveEntity(
   schema: CodecksApiSchema,
@@ -176,8 +201,7 @@ function resolveEntity(
       if (!relation) {
         continue;
       }
-
-      const relationValue = entity[relationName];
+      const relationValue = getRelationValue(entity, relationName, keyName);
       if (relationValue == null) {
         output[relationName] = relation.cardinality === "many" ? [] : null;
         continue;
@@ -223,7 +247,11 @@ export function denormalizeRootRelation(
   selection: Selection[]
 ): any {
   const root = response?._root;
-  const rootValue = Array.isArray(root) ? root[0]?.[relation] : root?.[relation];
+  const rootEntity = Array.isArray(root) ? root[0] : root;
+  const rootValue =
+    rootEntity && typeof rootEntity === "object"
+      ? getRelationValue(rootEntity as Record<string, any>, relation)
+      : undefined;
 
   if (rootValue == null) {
     return null;
