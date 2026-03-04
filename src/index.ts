@@ -1499,6 +1499,7 @@ Args:
   - project_id (string): Project ID for the deck
   - user_id (string): Your user ID
   - space_id (number): Space ID
+  - deck_type (string, optional): Deck type (e.g., hero, mixed)
   - cover_file_data (object, optional): Cover file metadata
   - session_id (string, optional): Client session ID from web app
 
@@ -1519,6 +1520,7 @@ Returns:
       const data = {
         sessionId: params.session_id || undefined,
         title: params.title,
+        deckType: params.deck_type || undefined,
         coverFileData: params.cover_file_data ?? null,
         projectId: params.project_id,
         userId: params.user_id,

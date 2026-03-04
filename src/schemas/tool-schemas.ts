@@ -118,6 +118,7 @@ export const CreateDeckSchema = z.object({
   project_id: z.string().describe("Project ID for the deck"),
   user_id: z.string().describe("Your user ID"),
   space_id: z.number().int().describe("Space ID"),
+  deck_type: z.string().optional().describe("Optional deck type (e.g. hero, mixed)"),
   cover_file_data: z.any().optional().describe("Cover file metadata (optional)"),
   session_id: z.string().optional().describe("[DEPRECATED] Client session ID - not required for MCP usage")
 }).strict();

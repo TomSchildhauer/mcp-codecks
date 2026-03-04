@@ -54,7 +54,8 @@ describe("tool schemas", () => {
       title: "Deck",
       project_id: "project-1",
       user_id: "user-1",
-      space_id: 1
+      space_id: 1,
+      deck_type: "hero"
     };
     expect(() => CreateDeckSchema.parse(value)).not.toThrow();
   });

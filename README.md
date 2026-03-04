@@ -138,6 +138,20 @@ Tool names use snake_case model names (e.g., `codecks_list_account_user_setting`
 }
 ```
 
+### Create a hero deck
+```typescript
+{
+  "name": "codecks_create_deck",
+  "arguments": {
+    "title": "Core Hero",
+    "project_id": "your-project-id",
+    "user_id": "your-user-id",
+    "space_id": 1,
+    "deck_type": "hero"
+  }
+}
+```
+
 ### Create a new card
 ```typescript
 {
