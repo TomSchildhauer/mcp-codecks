@@ -1,5 +1,42 @@
 # Codecks MCP Server
 
+## TL;DR Installation
+
+```bash
+npm install
+npm run build
+export CODECKS_AUTH_TOKEN="your-token-here"
+export CODECKS_ACCOUNT_SUBDOMAIN="your-subdomain"
+npm start
+```
+
+This starts the MCP server over stdio (default transport).
+
+### Claude Code (`.mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "codecks": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-codecks/dist/index.js"],
+      "env": {
+        "CODECKS_AUTH_TOKEN": "${CODECKS_AUTH_TOKEN}",
+        "CODECKS_ACCOUNT_SUBDOMAIN": "${CODECKS_ACCOUNT_SUBDOMAIN}"
+      }
+    }
+  }
+}
+```
+
+### Warp Oz Cloud Agent (`--mcp` inline JSON)
+
+```bash
+oz agent run \
+  --mcp '{"codecks":{"command":"node","args":["/absolute/path/to/mcp-codecks/dist/index.js"],"env":{"CODECKS_AUTH_TOKEN":"${CODECKS_AUTH_TOKEN}","CODECKS_ACCOUNT_SUBDOMAIN":"${CODECKS_ACCOUNT_SUBDOMAIN}"}}}' \
+  -p "Use the Codecks MCP server to list projects"
+```
+
 MCP (Model Context Protocol) server for integrating with [Codecks](https://www.codecks.io/), a game development project tracker. This server enables LLMs to interact with your Codecks organization to manage cards, decks, milestones, and projects.
 
 ## Features
@@ -76,6 +113,7 @@ export CODECKS_AUTH_TOKEN="your-token-here"
 export CODECKS_ACCOUNT_SUBDOMAIN="your-subdomain"
 npm run dev
 ```
+
 
 ## Available Tools
 
