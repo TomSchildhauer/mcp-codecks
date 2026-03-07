@@ -1390,6 +1390,7 @@ Args:
   - status (string, optional): Updated workflow status
   - deck_id (string, optional): Move card to the specified deck ID
   - milestone_id (string, optional): Assign card to the specified milestone ID
+  - parent_card_id (string | null, optional): Link card to a parent card ID; null unlinks parent
   - content (string, optional): Updated card content/body
   - assignee_id (string | null, optional): Updated assignee user ID; null clears assignee
   - session_id (string, optional): Client session ID from web app
@@ -1430,7 +1431,11 @@ Returns:
         applied += 1;
       }
 
-      if (params.content !== undefined || params.assignee_id !== undefined) {
+      if (
+        params.content !== undefined ||
+        params.assignee_id !== undefined ||
+        params.parent_card_id !== undefined
+      ) {
         const directData: Record<string, unknown> = {
           id: params.card_id,
           sessionId: params.session_id || undefined
@@ -1441,7 +1446,10 @@ Returns:
         if (params.assignee_id !== undefined) {
           directData.assigneeId = params.assignee_id;
         }
-        responses.content_or_assignee_update = await client.dispatch("cards/update", directData);
+        if (params.parent_card_id !== undefined) {
+          directData.parentCardId = params.parent_card_id;
+        }
+        responses.direct_update = await client.dispatch("cards/update", directData);
         applied += 1;
       }
 

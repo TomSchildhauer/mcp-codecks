@@ -129,7 +129,7 @@ Tool names use snake_case model names (e.g., `codecks_list_account_user_setting`
 - `codecks_get_card` - Get detailed information about a specific card
 - `codecks_delete_card` - Archive (soft-delete) a card by ID
 - `codecks_create_card` - Create a new card with content, properties, and assignments
-- `codecks_update_card` - Update one card's status/deck/milestone and/or content/assignee
+- `codecks_update_card` - Update one card's status/deck/milestone, parent linkage, and/or content/assignee
 - `codecks_bulk_update_cards` - Bulk update card status and/or move cards to a deck
 - `codecks_start_journey` - Explicitly apply workflow/journey expansion to a card
 
@@ -268,12 +268,13 @@ Tool names use snake_case model names (e.g., `codecks_list_account_user_setting`
   "arguments": {
     "card_id": "your-card-id",
     "status": "review",
+    "parent_card_id": "your-parent-card-id",
     "content": "Updated title line\\n\\nUpdated body text",
     "assignee_id": "your-user-id"
   }
 }
 ```
-Note: Codecks currently applies text edits through `content`; `title`-only mutation is not reliably supported by the API endpoint.
+Note: set `parent_card_id` to `null` to unlink a card from its current parent. Codecks currently applies text edits through `content`; `title`-only mutation is not reliably supported by the API endpoint.
 
 ## API Rate Limits
 
