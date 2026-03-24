@@ -88,7 +88,8 @@ const MODEL_FORCE_CLIENT_SIDE_FILTERING = new Set(["milestoneProject"]);
 const MODEL_DESCRIPTION_NOTES: Record<string, string> = {
   handCard: "\n\n**Note:** handCard represents card *bookmarks* (explicit pins), NOT the working hand/queue shown in the Codecks Hand tab. To get a user's actual hand cards, use `codecks_list_queue_entry` filtered by userId instead.",
   queueEntry: "\n\n**Note:** queueEntry represents the actual working hand/queue — the cards shown in the Codecks Hand tab. Filter by `userId` to get a specific user's hand. Use `cardDoneAt` to distinguish active cards (null) from recently completed ones (non-null).",
-  queueSelection: "\n\n**Note:** queueSelection controls which users appear in the Team Hands view. Query with accountId to get the list of tracked team members."
+  queueSelection: "\n\n**Note:** queueSelection controls which users appear in the Team Hands view. Query with accountId to get the list of tracked team members.",
+  workflowItem: "\n\n**Note:** workflowItem represents a **journey step** — a stage in a hero deck's production pipeline. Key field: `label` is the phase/zone name (e.g. \"Initial Design\", \"Polishing\"). Steps belong to a hero deck (`deckType: \"hero\"`) and phases are defined in `deck.workflowItemOrderLabels`. Use filter `{\"visibility\":\"default\"}` for active steps, and `{\"$order\":[\"sortValue\",\"itemId\"]}` for correct ordering. Relations: `targetDeck` (where child cards go), `inDeps`/`outDeps` (dependency arrows between steps, stored as workflowItem ID arrays), `assignee`."
 };
 
 const COMPATIBILITY_ALIASES: Record<string, { list: string[]; get: string[] }> = {
