@@ -48,11 +48,12 @@ const MODEL_SELECTION_OVERRIDES: Record<string, Selection[]> = {
   publicProjectInfo: ["cardCount", "cardDoneStreak", "lastActivityAt"],
   // Relation-heavy activity selections can trigger upstream 500s; keep safe field-only defaults.
   activity: ["createdAt", "type", "data"],
-  // Relation-heavy handCard selections can trigger upstream 500s; keep safe field-only defaults.
+  // handCard = bookmarks (NOT the working hand/queue). Relation expansion blocked to avoid 500s.
   handCard: ["sortIndex"],
   // Relation-heavy cardSubscription selections can trigger upstream 500s; keep safe field-only defaults.
   cardSubscription: ["createdAt"],
-  // Requesting nested card relation fields on queueEntry can trigger upstream 500s.
+  // queueEntry = the actual working hand/queue. Card relation expansion works via nested query
+  // syntax (e.g. {card: ["title"]}) but is blocked here due to earlier 500s with flat expansion.
   queueEntry: ["createdAt", "sortIndex", "cardDoneAt"],
   // Requesting nested card relation fields on cardUpvote can trigger upstream 500s.
   cardUpvote: ["createdAt", "type", "discordUserInfo"]
@@ -79,6 +80,17 @@ const MODEL_RELATION_EXPANSION_BLOCKLIST: Record<string, Set<string>> = {
   cardUpvote: new Set(["card"])
 };
 const MODEL_FORCE_CLIENT_SIDE_FILTERING = new Set(["milestoneProject"]);
+
+/**
+ * Model-specific description supplements for auto-generated tools.
+ * Clarifies semantics where entity names are misleading.
+ */
+const MODEL_DESCRIPTION_NOTES: Record<string, string> = {
+  handCard: "\n\n**Note:** handCard represents card *bookmarks* (explicit pins), NOT the working hand/queue shown in the Codecks Hand tab. To get a user's actual hand cards, use `codecks_list_queue_entry` filtered by userId instead.",
+  queueEntry: "\n\n**Note:** queueEntry represents the actual working hand/queue — the cards shown in the Codecks Hand tab. Filter by `userId` to get a specific user's hand. Use `cardDoneAt` to distinguish active cards (null) from recently completed ones (non-null).",
+  queueSelection: "\n\n**Note:** queueSelection controls which users appear in the Team Hands view. Query with accountId to get the list of tracked team members."
+};
+
 const COMPATIBILITY_ALIASES: Record<string, { list: string[]; get: string[] }> = {
   activity: {
     list: ["codecks_list_activities"],
@@ -973,7 +985,7 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
         listTool,
         {
           title: `List ${modelName}`,
-          description: `List ${modelName} items with optional filters and selection.${fieldsDesc}${relationsDesc}${filterExample}`,
+          description: `List ${modelName} items with optional filters and selection.${fieldsDesc}${relationsDesc}${filterExample}${MODEL_DESCRIPTION_NOTES[modelName] || ""}`,
           inputSchema: AutoListSchema,
           annotations: {
             readOnlyHint: true,
@@ -1135,7 +1147,7 @@ export function registerAutoTools(options: RegisterAutoToolsOptions) {
         getTool,
         {
           title: `Get ${modelName}`,
-          description: `Get a single ${modelName} by ID with optional field selection.${fieldsDesc}${relationsDesc}${exampleSelection}`,
+          description: `Get a single ${modelName} by ID with optional field selection.${fieldsDesc}${relationsDesc}${exampleSelection}${MODEL_DESCRIPTION_NOTES[modelName] || ""}`,
           inputSchema: AutoGetSchema,
           annotations: {
             readOnlyHint: true,

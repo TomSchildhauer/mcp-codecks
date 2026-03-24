@@ -739,8 +739,8 @@ Returns:
 server.registerTool(
   TOOL_ADD_TO_HAND,
   {
-    title: "Add Cards to Hand",
-    description: "Add one or more cards to hand/bookmarks.",
+    title: "Add Cards to Hand (Bookmarks)",
+    description: "Add one or more cards to hand/bookmarks. Note: this manages *bookmarks* (pinned card references), not the working queue. To add cards to a user's working hand/queue, use codecks_add_to_queue instead.",
     inputSchema: schemas.AddToHandSchema,
     annotations: {
       readOnlyHint: false,
@@ -783,8 +783,8 @@ server.registerTool(
 server.registerTool(
   TOOL_REMOVE_FROM_HAND,
   {
-    title: "Remove Cards from Hand",
-    description: "Remove one or more cards from hand/bookmarks.",
+    title: "Remove Cards from Hand (Bookmarks)",
+    description: "Remove one or more cards from hand/bookmarks. Note: this manages *bookmarks* (pinned card references), not the working queue. To remove cards from a user's working hand/queue, use codecks_remove_from_queue instead.",
     inputSchema: schemas.RemoveFromHandSchema,
     annotations: {
       readOnlyHint: false,
@@ -828,7 +828,7 @@ server.registerTool(
   TOOL_ADD_TO_QUEUE,
   {
     title: "Add Cards to Queue",
-    description: "Add one or more cards to queue.",
+    description: "Add one or more cards to queue. The queue (queueEntry) is the actual working hand shown in the Codecks Hand tab — the cards a user is actively working on.",
     inputSchema: schemas.AddToQueueSchema,
     annotations: {
       readOnlyHint: false,
@@ -877,7 +877,7 @@ server.registerTool(
   TOOL_REMOVE_FROM_QUEUE,
   {
     title: "Remove Cards from Queue",
-    description: "Remove one or more cards from queue.",
+    description: "Remove one or more cards from queue. The queue (queueEntry) is the actual working hand shown in the Codecks Hand tab.",
     inputSchema: schemas.RemoveFromQueueSchema,
     annotations: {
       readOnlyHint: false,
