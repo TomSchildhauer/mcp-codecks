@@ -67,6 +67,13 @@ const TOOL_CREATE_MILESTONE_PROJECT = "codecks_create_milestone_project";
 const TOOL_UPDATE_MILESTONE = "codecks_update_milestone";
 const TOOL_DELETE_MILESTONE = "codecks_delete_milestone";
 const TOOL_UNLINK_MILESTONE_PROJECT = "codecks_unlink_milestone_project";
+const TOOL_LIST_MILESTONE_ZONES = "codecks_list_milestone_zones";
+const TOOL_GET_MILESTONE_BOARD = "codecks_get_milestone_board";
+const TOOL_CREATE_MILESTONE_ZONE = "codecks_create_milestone_zone";
+const TOOL_UPDATE_MILESTONE_ZONE = "codecks_update_milestone_zone";
+const TOOL_DELETE_MILESTONE_ZONE = "codecks_delete_milestone_zone";
+const TOOL_REORDER_MILESTONE_ZONES = "codecks_reorder_milestone_zones";
+const TOOL_MOVE_CARDS_TO_MILESTONE_ZONE = "codecks_move_cards_to_milestone_zone";
 const TOOL_START_JOURNEY = "codecks_start_journey";
 const TOOL_ADD_TO_HAND = "codecks_add_to_hand";
 const TOOL_REMOVE_FROM_HAND = "codecks_remove_from_hand";
@@ -110,6 +117,13 @@ const manualTools = new Set<string>([
   TOOL_UPDATE_MILESTONE,
   TOOL_DELETE_MILESTONE,
   TOOL_UNLINK_MILESTONE_PROJECT,
+  TOOL_LIST_MILESTONE_ZONES,
+  TOOL_GET_MILESTONE_BOARD,
+  TOOL_CREATE_MILESTONE_ZONE,
+  TOOL_UPDATE_MILESTONE_ZONE,
+  TOOL_DELETE_MILESTONE_ZONE,
+  TOOL_REORDER_MILESTONE_ZONES,
+  TOOL_MOVE_CARDS_TO_MILESTONE_ZONE,
   TOOL_START_JOURNEY,
   TOOL_ADD_TO_HAND,
   TOOL_REMOVE_FROM_HAND,
@@ -227,6 +241,88 @@ async function resolveAccountId(client: CodecksClient): Promise<string | undefin
     accountSelection
   ) as Record<string, unknown> | null;
   return typeof account?.id === "string" ? account.id : undefined;
+}
+
+const milestoneZoneSelection: Selection[] = [
+  "id",
+  "name",
+  "manualOrderLabels",
+  "preferredOrder"
+];
+
+function normalizeMilestoneZones(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+async function getMilestoneZoneState(
+  client: CodecksClient,
+  milestoneId: string
+): Promise<{ milestone: Record<string, unknown> | null; zones: string[]; preferredOrder: Record<string, unknown> | null }> {
+  const query = buildIdQuery(schema, "milestone", [milestoneId], milestoneZoneSelection);
+  const response = await client.query(query);
+  const milestone = denormalizeById(
+    schema,
+    response as Record<string, any>,
+    "milestone",
+    milestoneId,
+    milestoneZoneSelection
+  ) as Record<string, unknown> | null;
+  const zones = normalizeMilestoneZones(milestone?.manualOrderLabels);
+  const preferredOrder = milestone?.preferredOrder && typeof milestone.preferredOrder === "object"
+    ? milestone.preferredOrder as Record<string, unknown>
+    : null;
+  return { milestone, zones, preferredOrder };
+}
+
+async function updateMilestoneZones(
+  client: CodecksClient,
+  milestoneId: string,
+  zones: string[],
+  preferredOrder: Record<string, unknown> | null,
+  sessionId?: string
+): Promise<unknown> {
+  const data: Record<string, unknown> = {
+    id: milestoneId,
+    sessionId: sessionId || undefined,
+    manualOrderLabels: zones
+  };
+  if (preferredOrder !== undefined) {
+    data.preferredOrder = preferredOrder;
+  }
+  return client.dispatch("milestones/update", data);
+}
+
+async function listCardsForMilestone(
+  client: CodecksClient,
+  milestoneId: string
+): Promise<Record<string, unknown>[]> {
+  const cardSelection: Selection[] = [
+    "id",
+    "accountSeq",
+    "title",
+    "derivedStatus",
+    "createdAt",
+    "lastUpdatedAt",
+    { deck: ["id", "title"] },
+    { assignee: ["id", "name"] }
+  ];
+  const cardQuery = buildRootQuery(
+    schema,
+    "account",
+    [{ [buildRelationKey("cards", { milestoneId, $order: "-lastUpdatedAt", $limit: 3000 })]: cardSelection }]
+  );
+  const cardResponse = await client.query(cardQuery);
+  const account = denormalizeRootRelation(schema, cardResponse as Record<string, any>, "account", [
+    { [buildRelationKey("cards", { milestoneId, $order: "-lastUpdatedAt", $limit: 3000 })]: cardSelection }
+  ]) as Record<string, unknown> | null;
+  const cards = (account?.cards as Record<string, unknown>[] | undefined) || [];
+  return cards.map((card) => normalizeCardId(card as Record<string, any>));
 }
 
 async function resolveOwnCardUpvoteId(
@@ -2667,6 +2763,367 @@ Returns:
       return {
         content: [{ type: "text", text: formatError(error) }]
       };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_list_milestone_zones
+// ============================================================================
+server.registerTool(
+  TOOL_LIST_MILESTONE_ZONES,
+  {
+    title: "List Milestone Zones",
+    description: "List zone labels configured on a milestone (manualOrderLabels) and their order.",
+    inputSchema: schemas.ListMilestoneZonesSchema,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.ListMilestoneZonesInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return {
+          content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }]
+        };
+      }
+      const zoneItems = zones.map((name, index) => ({ index, name }));
+      if (params.response_format === ResponseFormat.JSON) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ milestone_id: params.milestone_id, zones: zoneItems, preferred_order: preferredOrder }, null, 2) }],
+          structuredContent: { milestone_id: params.milestone_id, zones: zoneItems, preferred_order: preferredOrder }
+        };
+      }
+      const lines = ["# Milestone Zones", "", `Milestone: ${milestone.name || params.milestone_id}`, ""];
+      if (zoneItems.length === 0) {
+        lines.push("No zones configured.");
+      } else if (params.response_mode === ResponseMode.COMPACT) {
+        lines.push(...zoneItems.map((zone) => `- ${zone.index}: ${zone.name}`));
+      } else {
+        lines.push(...zoneItems.map((zone) => `- **${zone.index}**: ${zone.name}`));
+      }
+      if (preferredOrder) {
+        lines.push("", `Preferred order: \`${JSON.stringify(preferredOrder)}\``);
+      }
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_get_milestone_board
+// ============================================================================
+server.registerTool(
+  TOOL_GET_MILESTONE_BOARD,
+  {
+    title: "Get Milestone Board",
+    description: "Get milestone zones and (optionally) cards currently assigned to that milestone.",
+    inputSchema: schemas.GetMilestoneBoardSchema,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.GetMilestoneBoardInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return {
+          content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }]
+        };
+      }
+
+      let cards: Record<string, unknown>[] = [];
+      if (params.include_cards) {
+        cards = await listCardsForMilestone(client, params.milestone_id);
+      }
+
+      const board = {
+        milestone_id: params.milestone_id,
+        milestone_name: milestone.name,
+        zones: zones.map((name, index) => ({ index, name })),
+        preferred_order: preferredOrder,
+        cards
+      };
+
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(board, null, 2)
+        : [
+            "# Milestone Board",
+            "",
+            `Milestone: ${milestone.name || params.milestone_id}`,
+            `Zones: ${zones.length}`,
+            `Cards: ${cards.length}`
+          ].join("\n");
+
+      return {
+        content: [{ type: "text", text }],
+        structuredContent: params.response_format === ResponseFormat.JSON ? board : undefined
+      };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_create_milestone_zone
+// ============================================================================
+server.registerTool(
+  TOOL_CREATE_MILESTONE_ZONE,
+  {
+    title: "Create Milestone Zone",
+    description: "Create a zone label on a milestone by appending/inserting into manualOrderLabels.",
+    inputSchema: schemas.CreateMilestoneZoneSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.CreateMilestoneZoneInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return { content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }] };
+      }
+      if (zones.includes(params.zone_name)) {
+        const payload = { milestone_id: params.milestone_id, zone_name: params.zone_name, already_exists: true, zones };
+        const text = params.response_format === ResponseFormat.JSON
+          ? JSON.stringify(payload, null, 2)
+          : `Zone '${params.zone_name}' already exists on milestone '${params.milestone_id}'.`;
+        return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+      }
+      const nextZones = [...zones];
+      if (params.position !== undefined && params.position >= 0 && params.position <= nextZones.length) {
+        nextZones.splice(params.position, 0, params.zone_name);
+      } else {
+        nextZones.push(params.zone_name);
+      }
+      const response = await updateMilestoneZones(client, params.milestone_id, nextZones, preferredOrder);
+      const payload = { milestone_id: params.milestone_id, zone_name: params.zone_name, zones: nextZones, response };
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(payload, null, 2)
+        : `Zone '${params.zone_name}' created on milestone '${params.milestone_id}'.`;
+      return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_update_milestone_zone
+// ============================================================================
+server.registerTool(
+  TOOL_UPDATE_MILESTONE_ZONE,
+  {
+    title: "Rename Milestone Zone",
+    description: "Rename an existing milestone zone label.",
+    inputSchema: schemas.UpdateMilestoneZoneSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.UpdateMilestoneZoneInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return { content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }] };
+      }
+      const idx = zones.indexOf(params.zone_name);
+      if (idx === -1) {
+        return { content: [{ type: "text", text: `Error: Zone '${params.zone_name}' not found on milestone '${params.milestone_id}'.` }] };
+      }
+      if (zones.includes(params.new_zone_name) && params.new_zone_name !== params.zone_name) {
+        return { content: [{ type: "text", text: `Error: Zone '${params.new_zone_name}' already exists on milestone '${params.milestone_id}'.` }] };
+      }
+      const nextZones = [...zones];
+      nextZones[idx] = params.new_zone_name;
+      const response = await updateMilestoneZones(client, params.milestone_id, nextZones, preferredOrder);
+      const payload = {
+        milestone_id: params.milestone_id,
+        old_zone_name: params.zone_name,
+        new_zone_name: params.new_zone_name,
+        zones: nextZones,
+        response
+      };
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(payload, null, 2)
+        : `Zone '${params.zone_name}' renamed to '${params.new_zone_name}' on milestone '${params.milestone_id}'.`;
+      return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_delete_milestone_zone
+// ============================================================================
+server.registerTool(
+  TOOL_DELETE_MILESTONE_ZONE,
+  {
+    title: "Delete Milestone Zone",
+    description: "Delete an existing milestone zone label.",
+    inputSchema: schemas.DeleteMilestoneZoneSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.DeleteMilestoneZoneInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return { content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }] };
+      }
+      if (!zones.includes(params.zone_name)) {
+        return { content: [{ type: "text", text: `Error: Zone '${params.zone_name}' not found on milestone '${params.milestone_id}'.` }] };
+      }
+      const nextZones = zones.filter((zone) => zone !== params.zone_name);
+      const response = await updateMilestoneZones(client, params.milestone_id, nextZones, preferredOrder);
+      const payload = { milestone_id: params.milestone_id, zone_name: params.zone_name, zones: nextZones, response };
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(payload, null, 2)
+        : `Zone '${params.zone_name}' deleted from milestone '${params.milestone_id}'.`;
+      return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_reorder_milestone_zones
+// ============================================================================
+server.registerTool(
+  TOOL_REORDER_MILESTONE_ZONES,
+  {
+    title: "Reorder Milestone Zones",
+    description: "Replace milestone zone order by setting manualOrderLabels to the provided ordered list.",
+    inputSchema: schemas.ReorderMilestoneZonesSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.ReorderMilestoneZonesInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones, preferredOrder } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return { content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }] };
+      }
+      const current = [...zones].sort();
+      const incoming = [...params.zone_names].sort();
+      if (current.length !== incoming.length || current.some((name, idx) => name !== incoming[idx])) {
+        return {
+          content: [{
+            type: "text",
+            text: "Error: zone_names must contain exactly the same zone names currently configured on the milestone."
+          }]
+        };
+      }
+      const response = await updateMilestoneZones(client, params.milestone_id, params.zone_names, preferredOrder);
+      const payload = { milestone_id: params.milestone_id, zones: params.zone_names, response };
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(payload, null, 2)
+        : `Milestone zones reordered successfully for '${params.milestone_id}'.`;
+      return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: codecks_move_cards_to_milestone_zone
+// ============================================================================
+server.registerTool(
+  TOOL_MOVE_CARDS_TO_MILESTONE_ZONE,
+  {
+    title: "Move Cards to Milestone Zone",
+    description: "Move cards to a milestone zone label using cards/update manualOrderLabel; optionally assigns cards to the milestone first.",
+    inputSchema: schemas.MoveCardsToMilestoneZoneSchema,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    }
+  },
+  async (params: schemas.MoveCardsToMilestoneZoneInput) => {
+    try {
+      const client = getClient();
+      const { milestone, zones } = await getMilestoneZoneState(client, params.milestone_id);
+      if (!milestone) {
+        return { content: [{ type: "text", text: `Error: Milestone with ID '${params.milestone_id}' not found.` }] };
+      }
+      if (!zones.includes(params.zone_name)) {
+        return { content: [{ type: "text", text: `Error: Zone '${params.zone_name}' not found on milestone '${params.milestone_id}'.` }] };
+      }
+
+      const responses: Array<Record<string, unknown>> = [];
+      if (params.ensure_milestone_assignment) {
+        const bulk = await client.dispatch("cards/bulkUpdate", {
+          ids: params.card_ids,
+          milestoneId: params.milestone_id,
+          sessionId: params.session_id || undefined
+        });
+        responses.push({ op: "cards/bulkUpdate_milestone", response: bulk });
+      }
+
+      const cardResults: Array<Record<string, unknown>> = [];
+      for (const cardId of params.card_ids) {
+        try {
+          const response = await client.dispatch("cards/update", {
+            id: cardId,
+            milestoneId: params.milestone_id,
+            manualOrderLabel: params.zone_name,
+            sessionId: params.session_id || undefined
+          });
+          cardResults.push({ card_id: cardId, ok: true, response });
+        } catch (error) {
+          cardResults.push({ card_id: cardId, ok: false, error: formatError(error) });
+        }
+      }
+      responses.push({ op: "cards/update_manualOrderLabel", results: cardResults });
+
+      const payload = {
+        milestone_id: params.milestone_id,
+        zone_name: params.zone_name,
+        card_ids: params.card_ids,
+        ensure_milestone_assignment: params.ensure_milestone_assignment,
+        responses
+      };
+      const text = params.response_format === ResponseFormat.JSON
+        ? JSON.stringify(payload, null, 2)
+        : `Requested move of ${params.card_ids.length} card(s) to zone '${params.zone_name}' in milestone '${params.milestone_id}'.`;
+      return { content: [{ type: "text", text }], structuredContent: params.response_format === ResponseFormat.JSON ? payload : undefined };
+    } catch (error) {
+      return { content: [{ type: "text", text: formatError(error) }] };
     }
   }
 );
