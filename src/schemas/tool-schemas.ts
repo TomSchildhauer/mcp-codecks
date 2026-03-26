@@ -376,6 +376,53 @@ export const UpdateMilestoneSchema = z.object({
   { message: "Provide at least one field to update." }
 );
 
+export const ListMilestoneZonesSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to inspect"),
+  response_mode: ResponseModeSchema,
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const GetMilestoneBoardSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to inspect"),
+  include_cards: z.boolean().default(true).describe("Include cards currently assigned to the milestone"),
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const CreateMilestoneZoneSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to update"),
+  zone_name: z.string().min(1).describe("Zone name to create"),
+  position: z.number().int().min(0).optional().describe("Optional insertion index (0-based; append when omitted)"),
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const UpdateMilestoneZoneSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to update"),
+  zone_name: z.string().min(1).describe("Existing zone name to rename"),
+  new_zone_name: z.string().min(1).describe("New zone name"),
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const DeleteMilestoneZoneSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to update"),
+  zone_name: z.string().min(1).describe("Zone name to delete"),
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const ReorderMilestoneZonesSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID to update"),
+  zone_names: z.array(z.string().min(1)).min(1).describe("Complete ordered zone name list"),
+  response_format: ResponseFormatSchema
+}).strict();
+
+export const MoveCardsToMilestoneZoneSchema = z.object({
+  milestone_id: z.string().describe("Milestone ID that owns the zone"),
+  zone_name: z.string().min(1).describe("Destination zone name"),
+  card_ids: z.array(z.string()).min(1).describe("Card IDs to move"),
+  ensure_milestone_assignment: z.boolean().default(true).describe("Assign cards to milestone before zone move"),
+  session_id: z.string().optional().describe("[DEPRECATED] Client session ID - not required for MCP usage"),
+  response_format: ResponseFormatSchema
+}).strict();
+
 export const DeleteMilestoneSchema = z.object({
   milestone_id: z.string().describe("Milestone ID to delete/archive"),
   response_format: ResponseFormatSchema
@@ -434,6 +481,13 @@ export type UnsubscribeCardInput = z.infer<typeof UnsubscribeCardSchema>;
 export type SubscribeDeckInput = z.infer<typeof SubscribeDeckSchema>;
 export type UnsubscribeDeckInput = z.infer<typeof UnsubscribeDeckSchema>;
 export type UpdateMilestoneInput = z.infer<typeof UpdateMilestoneSchema>;
+export type ListMilestoneZonesInput = z.infer<typeof ListMilestoneZonesSchema>;
+export type GetMilestoneBoardInput = z.infer<typeof GetMilestoneBoardSchema>;
+export type CreateMilestoneZoneInput = z.infer<typeof CreateMilestoneZoneSchema>;
+export type UpdateMilestoneZoneInput = z.infer<typeof UpdateMilestoneZoneSchema>;
+export type DeleteMilestoneZoneInput = z.infer<typeof DeleteMilestoneZoneSchema>;
+export type ReorderMilestoneZonesInput = z.infer<typeof ReorderMilestoneZonesSchema>;
+export type MoveCardsToMilestoneZoneInput = z.infer<typeof MoveCardsToMilestoneZoneSchema>;
 export type DeleteMilestoneInput = z.infer<typeof DeleteMilestoneSchema>;
 export type UnlinkMilestoneProjectInput = z.infer<typeof UnlinkMilestoneProjectSchema>;
 export type GetCurrentUserInput = z.infer<typeof GetCurrentUserSchema>;

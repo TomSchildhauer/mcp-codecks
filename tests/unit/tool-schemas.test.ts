@@ -6,24 +6,30 @@ import {
   BulkUpdateCardsSchema,
   UpdateCardSchema,
   CreateMilestoneProjectSchema,
+  CreateMilestoneZoneSchema,
   CreateMilestoneSchema,
   CreateSpaceSchema,
   CreateCardSchema,
   CreateDeckSchema,
   CreateProjectSchema,
   DeleteMilestoneSchema,
+  DeleteMilestoneZoneSchema,
   DeleteSpaceSchema,
   DeleteDeckSchema,
   DeleteCardSchema,
+  GetMilestoneBoardSchema,
   ListCardsSchema,
   ListDecksSchema,
+  ListMilestoneZonesSchema,
   ListMilestonesSchema,
   ListProjectsSchema,
   ListSpacesSchema,
   GetSpaceSchema,
+  MoveCardsToMilestoneZoneSchema,
   RemoveCardUpvoteSchema,
   RemoveFromHandSchema,
   RemoveFromQueueSchema,
+  ReorderMilestoneZonesSchema,
   ReorderQueueSchema,
   SetProjectVisibilitySchema,
   StartJourneySchema,
@@ -32,6 +38,7 @@ import {
   UnlinkMilestoneProjectSchema,
   UnsubscribeCardSchema,
   UnsubscribeDeckSchema,
+  UpdateMilestoneZoneSchema,
   UpdateMilestoneSchema,
   UpdateSpaceSchema,
   UpdateDeckSchema,
@@ -160,6 +167,46 @@ describe("tool schemas", () => {
       session_id: "session-1",
       response_format: "json"
     })).not.toThrow();
+  });
+
+  it("validates milestone zone inputs", () => {
+    expect(ListMilestoneZonesSchema.parse({ milestone_id: "ms-1", response_format: "json" }).response_mode).toBe("compact");
+    expect(() => GetMilestoneBoardSchema.parse({ milestone_id: "ms-1", response_format: "json" })).not.toThrow();
+    expect(GetMilestoneBoardSchema.parse({ milestone_id: "ms-1", response_format: "json" }).include_cards).toBe(true);
+    expect(() => CreateMilestoneZoneSchema.parse({
+      milestone_id: "ms-1",
+      zone_name: "In QA",
+      position: 0,
+      response_format: "json"
+    })).not.toThrow();
+    expect(() => UpdateMilestoneZoneSchema.parse({
+      milestone_id: "ms-1",
+      zone_name: "In QA",
+      new_zone_name: "Ready for QA",
+      response_format: "json"
+    })).not.toThrow();
+    expect(() => DeleteMilestoneZoneSchema.parse({
+      milestone_id: "ms-1",
+      zone_name: "In QA",
+      response_format: "json"
+    })).not.toThrow();
+    expect(() => ReorderMilestoneZonesSchema.parse({
+      milestone_id: "ms-1",
+      zone_names: ["Backlog", "In QA", "Done"],
+      response_format: "json"
+    })).not.toThrow();
+    expect(MoveCardsToMilestoneZoneSchema.parse({
+      milestone_id: "ms-1",
+      zone_name: "In QA",
+      card_ids: ["card-1"],
+      response_format: "json"
+    }).ensure_milestone_assignment).toBe(true);
+    expect(() => MoveCardsToMilestoneZoneSchema.parse({
+      milestone_id: "ms-1",
+      zone_name: "In QA",
+      card_ids: [],
+      response_format: "json"
+    })).toThrow();
   });
 
   it("validates interaction write inputs", () => {

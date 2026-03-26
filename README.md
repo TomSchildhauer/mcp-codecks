@@ -157,6 +157,13 @@ Tool names use snake_case model names (e.g., `codecks_list_account_user_setting`
 - `codecks_create_milestone` - Create a milestone and attach it to project(s)
 - `codecks_create_milestone_project` - Link an existing milestone to an additional project
 - `codecks_update_milestone` - Update milestone fields and linked projects
+- `codecks_list_milestone_zones` - List milestone zone labels (manual board columns)
+- `codecks_get_milestone_board` - Get milestone zones and (optionally) cards assigned to the milestone
+- `codecks_create_milestone_zone` - Add a new zone label to a milestone
+- `codecks_update_milestone_zone` - Rename a milestone zone label
+- `codecks_delete_milestone_zone` - Delete a milestone zone label
+- `codecks_reorder_milestone_zones` - Reorder milestone zone labels
+- `codecks_move_cards_to_milestone_zone` - Move cards into a milestone zone label
 - `codecks_delete_milestone` - Delete/archive a milestone
 - `codecks_unlink_milestone_project` - Remove a project from a milestone's linked projects
 
